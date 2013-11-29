@@ -120,47 +120,83 @@ class AdminController extends \Ip\Controller
 
         foreach($index as $name => $object){
 
+            //TODO get page data from JSON
             $buttonTitle = basename($name, ".json");
+            $url = $buttonTitle;
 
             print "Button title:".$buttonTitle;
-            $pageId = \Ip\Module\Content\Service::addPage($zoneName, $parentPageId, $buttonTitle, $buttonTitle);
+            $pageId = \Ip\Module\Content\Service::addPage($zoneName, $parentPageId, $buttonTitle, $buttonTitle, $url);
             $revisionId = \Ip\Revision::createRevision($zoneName, $pageId, true);
 
 
+
             $string = file_get_contents( $name);
+
+            $position = 0;
+
             $widgetData = json_decode($string, true);
 
             foreach ($widgetData as $widgetKey=>$widgetValue){
+                if (isset($widgetValue['type'])){
+                    $widgetName = $widgetValue['type'];
 
+                    //TODO Testing
+                    $processWidget = false;
 
-                $widgetName = $widgetValue['type'];
-
-                //TODO Testing
-                if ($widgetName=='IpText'){
-
-                    $content = Array();
-                    if (isset($widgetValue['text']) ){
-                        $content['text'] =$widgetValue['text'];
+                    switch ($widgetName){
+                        case 'IpSeparator':
+                            $content = null;
+                            $processWidget = true;
+                            break;
+                        case 'IpTable':
+                            $content['text'] = $widgetValue['text'];
+                            $processWidget = true;
+                            break;
+                        case 'IpText':
+                            $content['text'] = $widgetValue['text'];
+                            $processWidget = true;
+                        break;
+                        case 'IpTextImage': // Import IpTextImage as IpText
+                            $widgetName = 'IpText';
+                            $content['text'] = $widgetValue['text'];
+                            $processWidget = true;
+                            break;
+                        case 'IpTitle':
+                        $content['title'] = $widgetValue['title'];
+                        $processWidget = true;
+                        break;
+                        case 'IpHtml':
+                            $content['html'] = $widgetValue['html'];
+                            $processWidget = true;
+                            break;
+                        default:
+                            $content = null;
+                        break;
                     }
 
-                    if (isset($widgetValue['title']) ){
-                        $content['title'] =$widgetValue['title'];
+                    if ($processWidget){
+                        $position++;
+                        $instanceId = \Ip\Module\Content\Service::addWidget(
+                            $widgetName,
+                            $zoneName,
+                            $pageId,
+                            'main',
+                            $revisionId,
+                            $position
+                        );
+
+                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout = 'default');
+
+
+                    }else{
+                        echo '<br>ERR:'.$widgetName." not supported<br>";
                     }
-
-                    $instanceId = \Ip\Module\Content\Service::addWidget(
-                        $widgetName,
-                        $zoneName,
-                        $pageId,
-                        'main',
-                        $revisionId,
-                        null
-                    );
-
-                    \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout = 'default');
                 }
-
             }
 
+
+
+            
         }
     }
 
