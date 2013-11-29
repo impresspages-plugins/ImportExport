@@ -29,49 +29,17 @@ class AdminController extends \Ip\Controller
 
             foreach ($zones as $zone){
 
-
                 $zoneName = $zone['name'];
 
                 $zone = ipContent()->getZone($zoneName);
-
-
 
                 $languages = \Ip\Module\Pages\Db::getLanguages();
 
                 foreach ($languages as $key => $language) {
                     $language_id = $language['id'];
-                    $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zone->getId(), $language_id);
 
 
-                    if ($parentPageId === false) {
-                        trigger_error("Can't find root zone element.");
-
-                        return false;
-                    }
-
-print_r($language);
-
-
-
-                    $parentPage = $zone->getPage($parentPageId);
-
-                    $pageId = \Ip\Module\Content\Service::addPage($zoneName, $parentPageId);
-                    $revisionId = \Ip\Revision::createRevision($zoneName, $pageId, true);
-
-                    $widgetName = 'IpText';
-                    $content['text'] = '<p>Demushke</p>';
-
-                    $instanceId = \Ip\Module\Content\Service::addWidget(
-                        $widgetName,
-                        $zoneName,
-                        $pageId,
-                        'main',
-                        $revisionId,
-                        null
-                    );
-                    \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout = 'default');
-
-                    $this->importWidgets($language['d_short']);
+                    $this->importWidgets($zone, $language);
 
                 }
             }
@@ -122,16 +90,77 @@ print_r($language);
         }
     }
 
-    private function importWidgets($languageDir){
+    private function importWidgets($zone, $language){
+
+        $language_id = $language['id'];
+        $languageDir = $language['d_short'];
+
+        $zoneName = $zone->getName();
+
+        $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zone->getId(), $language_id);
+
+
+        if ($parentPageId === false) {
+            trigger_error("Can't find root zone element.");
+
+            return false;
+        }
+
+        $parentPage = $zone->getPage($parentPageId);
+
+
+
+
+
         $path = realpath(ipConfig()->fileDirFile('ImportExport'));
 
-        $Regex = new RegexIterator($Iterator, '/^.+\.json$/i', RecursiveRegexIterator::GET_MATCH);
+        $Directory = new \RecursiveDirectoryIterator($path);
+        $Iterator = new \RecursiveIteratorIterator($Directory);
+        $index = new \RegexIterator($Iterator, '/^.+\.json$/i', \RecursiveRegexIterator::GET_MATCH);
 
-        $objects = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path), \RecursiveIteratorIterator::SELF_FIRST);
-        foreach($objects as $name => $object){
+        foreach($index as $name => $object){
+
+            $buttonTitle = basename($name, ".json");
+
+            print "Button title:".$buttonTitle;
+            $pageId = \Ip\Module\Content\Service::addPage($zoneName, $parentPageId, $buttonTitle, $buttonTitle);
+            $revisionId = \Ip\Revision::createRevision($zoneName, $pageId, true);
+
+
             $string = file_get_contents( $name);
-            $json_a = json_decode($string, true);
-            print $name."<Br>";
+            $widgetData = json_decode($string, true);
+
+            foreach ($widgetData as $widgetKey=>$widgetValue){
+
+
+                $widgetName = $widgetValue['type'];
+
+                //TODO Testing
+                if ($widgetName=='IpText'){
+
+                    $content = Array();
+                    if (isset($widgetValue['text']) ){
+                        $content['text'] =$widgetValue['text'];
+                    }
+
+                    if (isset($widgetValue['title']) ){
+                        $content['title'] =$widgetValue['title'];
+                    }
+
+                    $instanceId = \Ip\Module\Content\Service::addWidget(
+                        $widgetName,
+                        $zoneName,
+                        $pageId,
+                        'main',
+                        $revisionId,
+                        null
+                    );
+
+                    \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout = 'default');
+                }
+
+            }
+
         }
     }
 
