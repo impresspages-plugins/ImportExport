@@ -11,11 +11,10 @@ class AdminController extends \Ip\Controller
 
         $zones = ipContent()->getZones();
 
-        $parentId=0;
+        $parentId = 0;
         $recursive = true;
 
 
-print "ZONES IMPORTED";
 
         $zoneData['id'] = 111;
         $zoneData['name'] = 'TestName';
@@ -29,20 +28,17 @@ print "ZONES IMPORTED";
         try {
 
 
-
-            foreach ($zones as $zone){
+            foreach ($zones as $zone) {
 
 
                 $zoneName = $zone->getName();
 
-                print "PROCESSING ZONE:".$zoneName;
+                print "PROCESSING ZONE:" . $zoneName;
 
 //                $zone = ipContent()->getZone($zoneName);
                 $zoneId = $zone->getId();
 
                 $recursive = true; //TODO
-
-
 
 
                 $languages = \Ip\Module\Pages\Db::getLanguages();
@@ -52,18 +48,19 @@ print "ZONES IMPORTED";
 
                     $language_id = $language['id'];
 
-                    $directory = ipConfig()->fileDirFile('ImportExport/archive/'.$language['url'].'_'.$language_id.'/'.$zoneName);
+                    $directory = ipConfig()->fileDirFile(
+                        'ImportExport/archive/' . $language['url'] . '_' . $language_id . '/' . $zoneName
+                    );
 
-                    if(file_exists($directory) || is_dir($directory)){
-                        echo "<br>Processing:".$directory;
+                    if (file_exists($directory) || is_dir($directory)) {
+                        echo "<br>Processing:" . $directory;
                         $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zone->getId(), $language_id);
 
                         $this->addZonePages($directory, $parentPageId, $recursive, $zoneName, $language);
 
 
-
-                    }else{
-                        echo "<br>Skipping:".$directory;
+                    } else {
+                        echo "<br>Skipping:" . $directory;
                     }
                 }
             }
@@ -78,7 +75,7 @@ print "ZONES IMPORTED";
     private function importZones()
     {
 
-        $string = file_get_contents( ipConfig()->fileDirFile('ImportExport/archive/zones.json'));
+        $string = file_get_contents(ipConfig()->fileDirFile('ImportExport/archive/zones.json'));
         $json_a = json_decode($string, true);
         foreach ($json_a as $zone) {
 
@@ -89,7 +86,15 @@ print "ZONES IMPORTED";
             $associatedModule = 'Content';
             $defaultLayout = 'main.php';
 
-            \Ip\Module\Pages\Service::addZone($zoneTitle, $zoneName, $associatedModule, $defaultLayout, null, $zoneDescription, $zoneUrl );
+            \Ip\Module\Pages\Service::addZone(
+                $zoneTitle,
+                $zoneName,
+                $associatedModule,
+                $defaultLayout,
+                null,
+                $zoneDescription,
+                $zoneUrl
+            );
 
 
         }
@@ -114,7 +119,8 @@ print "ZONES IMPORTED";
         }
     }
 
-    private function importWidgets($fileName, $pageId, $zoneName, $language){
+    private function importWidgets($fileName, $pageId, $zoneName, $language)
+    {
 
         $language_id = $language['id'];
         $languageDir = $language['url'];
@@ -133,33 +139,43 @@ print "ZONES IMPORTED";
 
         $parentPage = $zone->getPage($parentPageId);
 
-        $path = realpath(ipConfig()->fileDirFile('ImportExport') ).'/archive/'.$languageDir.'_'.$language_id.'/'.$zoneName;
+        $path = realpath(
+                ipConfig()->fileDirFile('ImportExport')
+            ) . '/archive/' . $languageDir . '_' . $language_id . '/' . $zoneName;
 
 
-            //TODO get page data from JSON
-            $buttonTitle = basename($fileName, ".json");
-            $url = $buttonTitle;
+        //TODO get page data from JSON
+        $buttonTitle = basename($fileName, ".json");
+        $url = $buttonTitle;
 
-            print "Button title:".$buttonTitle;
+        print "Button title:" . $buttonTitle;
 
-            $revisionId = \Ip\Revision::createRevision($zoneName, $pageId, true);
+        $revisionId = \Ip\Revision::createRevision($zoneName, $pageId, true);
 
 
+        $string = file_get_contents($fileName);
 
-            $string = file_get_contents( $fileName);
+        $position = 0;
 
-            $position = 0;
+        $pageData = json_decode($string, true);
+        print "<br>Page data";
+        print_r($pageData);
+        if (isset($pageData['widgets'])) {
 
-            $widgetData = json_decode($string, true);
+            $widgetData = $pageData['widgets'];
 
-            foreach ($widgetData as $widgetKey=>$widgetValue){
-                if (isset($widgetValue['type'])){
+            foreach ($widgetData as $widgetKey => $widgetValue) {
+
+                print "<br>Widget key:".$widgetKey;
+                if (isset($widgetValue['type'])) {
                     $widgetName = $widgetValue['type'];
 
                     //TODO Testing
                     $processWidget = false;
 
-                    switch ($widgetName){
+                    $layout = 'default';
+
+                    switch ($widgetName) {
                         case 'IpSeparator':
                             $content = null;
                             $processWidget = true;
@@ -171,26 +187,31 @@ print "ZONES IMPORTED";
                         case 'IpText':
                             $content['text'] = $widgetValue['text'];
                             $processWidget = true;
-                        break;
+                            break;
                         case 'IpTextImage': // Import IpTextImage as IpText
                             $widgetName = 'IpText';
                             $content['text'] = $widgetValue['text'];
                             $processWidget = true;
                             break;
                         case 'IpTitle':
-                        $content['title'] = $widgetValue['title'];
-                        $processWidget = true;
-                        break;
+                            $content['title'] = $widgetValue['title'];
+                            $processWidget = true;
+                            break;
                         case 'IpHtml':
                             $content['html'] = $widgetValue['html'];
+                            if (!isset($widgetValue['layout'])) {
+                                $layout = 'escape'; // default layout for code examples
+                                print "Set LAYOUT ESCAPE xxx";
+                            }
+
                             $processWidget = true;
                             break;
                         default:
                             $content = null;
-                        break;
+                            break;
                     }
 
-                    if ($processWidget){
+                    if ($processWidget) {
                         $position++;
                         $instanceId = \Ip\Module\Content\Service::addWidget(
                             $widgetName,
@@ -201,67 +222,68 @@ print "ZONES IMPORTED";
                             $position
                         );
 
-                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout = 'default');
+                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
 
-
-                    }else{
-                        echo '<br>ERR:'.$widgetName." not supported<br>";
+                    } else {
+                        echo '<br>ERR:' . $widgetName . " not supported<br>";
                     }
                 }
 
-
-
-
-        }
-    }
-
-    private function addPages($parentId, $pages, $zoneName, $language){
-        foreach ($pages as $fileName){
-            $buttonTitle = basename($fileName, ".json");
-            $url = $buttonTitle;
-            $pageId = \Ip\Module\Content\Service::addPage($zoneName, $parentId, $buttonTitle, $buttonTitle, $url);
-
-
-            if (is_file($fileName)){
-                $this->importWidgets($fileName, $pageId, $zoneName, $language);
             }
 
+
         }
-        return true;
     }
 
 
-    private function addZonePages($directory, $parentId, $recursive, $zoneName, $language) {
+    private function addZonePages($directory, $parentId, $recursive, $zoneName, $language)
+    {
         $array_items = array();
-        print "adding zone pages";
         if ($handle = opendir($directory)) {
             while (false !== ($file = readdir($handle))) {
                 if ($file != "." && $file != "..") {
-                    if (is_dir($directory. "/" . $file)) {
-                        if($recursive) {
-                            print "<Br>PARENT ID:".$parentId;
-                            print "INSERT ";
-                            print "<br><br>";
+                    if (is_dir($directory . "/" . $file)) {
 
-                            $buttonTitle = basename($file);
-                            $url = $buttonTitle;
-                            print "PARENT ID::::".$parentId;
+                        if ($recursive) {
 
+                            $string = file_get_contents($directory . "/" . $file.".json");
+                            $pageData = json_decode($string, true);
 
-                            $pageId = \Ip\Module\Content\Service::addPage($zoneName, $parentId, $buttonTitle, $buttonTitle, $url);
-                            print "ADDED PAGE FOR TREE:::".$file.":::".$pageId."<Br>";
-                            $this->addZonePages($directory. "/" . $file, $pageId, $recursive, $zoneName, $language);
+                            $pageSettings = $pageData['settings'];
+                            $buttonTitle = $pageSettings['button_title'];
+                            $pageTitle =  $pageSettings['page_title'];
+                            $url = $pageSettings['url'];
+
+                            $pageId = \Ip\Module\Content\Service::addPage(
+                                $zoneName,
+                                $parentId,
+                                $buttonTitle,
+                                $pageTitle,
+                                $url
+                            );
+                            $this->addZonePages($directory . "/" . $file, $pageId, $recursive, $zoneName, $language);
                         }
-                        $file = $directory . "/" . $file;
-                    } else {
-                        $file = $directory . "/" . $file;
 
-                        $buttonTitle = basename($file, ".json");
-                        $url = $buttonTitle;
-                        $pageId = \Ip\Module\Content\Service::addPage($zoneName, $parentId, $buttonTitle, $buttonTitle, $url);
-                        print "ADDED PAGE:::".$file.":::".$pageId."<Br>";
-                        $this->importWidgets($file, $pageId, $zoneName, $language);
-                        print "ADDED WIDGETS<Br>";
+                    } else {
+                        $fileFullPath = $directory . "/" . $file;
+                        if (!is_dir(preg_replace("/\\.[^.\\s]{3,4}$/", "", $fileFullPath))){
+                            $string = file_get_contents($fileFullPath);
+
+                            $pageData = json_decode($string, true);
+                            $pageSettings = $pageData['settings'];
+                            $buttonTitle = $pageSettings['button_title'];
+                            $pageTitle =  $pageSettings['page_title'];
+                            $url = $pageSettings['url'];
+
+                            $pageId = \Ip\Module\Content\Service::addPage(
+                                $zoneName,
+                                $parentId,
+                                $buttonTitle,
+                                $pageTitle,
+                                $url
+                            );
+                            $this->importWidgets($fileFullPath, $pageId, $zoneName, $language);
+                        }
                     }
                 }
             }
