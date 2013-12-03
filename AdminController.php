@@ -6,6 +6,9 @@ use Ip\Form\Exception;
 
 class AdminController extends \Ip\Controller
 {
+
+    private $zonesForImporting = Array();
+
     public function index()
     {
 
@@ -16,9 +19,11 @@ class AdminController extends \Ip\Controller
 
             switch ($_REQUEST['startImport']){
                 case 'import':
-                    $this->startImport();
+                    ipAddPluginAsset('ImportExport', 'importExport.js');
+//                    $this->startImport();
                     $data['test'] = 'test';
-                    return new \Ip\Response\Json($data);
+//                    return new \Ip\Response\Json($data);
+                    return 'test';
                 break;
                 default:
                     return $this->showWaitMessage();
@@ -68,13 +73,13 @@ class AdminController extends \Ip\Controller
         $parentId = 0;
         $recursive = true;
 
-        ipAddPluginAsset('ImportExport', 'importExport.js');
+
 
         try {
 
-            foreach ($zones as $zone) {
+            foreach ($this->zonesForImporting as $zone) {
 
-                $zoneName = $zone->getName();
+                $zoneName = $zone['nameForImporting'];
 
 //                $zone = ipContent()->getZone($zoneName);
                 $zoneId = $zone->getId();
@@ -89,12 +94,12 @@ class AdminController extends \Ip\Controller
                     $language_id = $language['id'];
 
                     $directory = ipConfig()->fileDirFile(
-                        'ImportExport/archive/' . $language['url'] . '_' . $language_id . '/' . $zoneName
+                        'ImportExport/archive/' . $language['url'] . '_' . $language_id . '/' . $zone['nameInFile']
                     );
 
                     if (file_exists($directory) || is_dir($directory)) {
                         echo "<br>Processing:" . $directory;
-                        $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zone->getId(), $language_id);
+                        $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zoneId, $language_id);
 
                         $this->addZonePages($directory, $parentPageId, $recursive, $zoneName, $language);
 
@@ -115,9 +120,12 @@ class AdminController extends \Ip\Controller
     private function importZones()
     {
 
+        $this->zonesForImporting = Array();
+
         $string = file_get_contents(ipConfig()->fileDirFile('ImportExport/archive/zones.json'));
-        $json_a = json_decode($string, true);
-        foreach ($json_a as $zone) {
+        $zoneList = json_decode($string, true);
+
+        foreach ($zoneList as $zone) {
 
             $curZoneName = $zone['name'];
             $prefix = 'imported_';
@@ -132,6 +140,17 @@ class AdminController extends \Ip\Controller
             $zoneUrl = $zone['url'];
             $associatedModule = 'Content';
             $defaultLayout = 'main.php';
+
+            $zonesForImporting[] = Array(
+                'nameInFile' => $zone['name'],
+                'nameForImporting' => $zoneName,
+                'title' => $zoneTitle,
+                'description' => $zoneDescription,
+                'url' => $zoneUrl,
+                'associatedModule' => $associatedModule,
+                'layout' => $defaultLayout
+            );
+
             try{
             \Ip\Module\Pages\Service::addZone(
                 $zoneTitle,
