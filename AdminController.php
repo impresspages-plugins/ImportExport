@@ -7,36 +7,28 @@ use Ip\Form\Exception;
 class AdminController extends \Ip\Controller
 {
 
-    private $zonesForImporting = Array();
+    private $zonesForImporting = Array(),
+            $importLog = Array();
 
     public function index()
     {
 
-
         $form = new \Ip\Form();
 
-        if (isset($_REQUEST['startImport'])){
 
-            switch ($_REQUEST['startImport']){
-                case 'import':
-                    ipAddPluginAsset('ImportExport', 'importExport.js');
-//                    $this->startImport();
-                    $data['test'] = 'test';
-//                    return new \Ip\Response\Json($data);
-                    return 'test';
-                break;
-                default:
-                    return $this->showWaitMessage();
-                break;
-            }
-        }
+        $field = new \Ip\Form\Field\File(
+            array(
+                'name' => 'siteFile', //html "name" attribute
+                'label' => 'ZIP file:', //field label that will be displayed next to input field
+            ));
+        $form->addField($field);
+        $fileField = $field;
 
 
-        //add fields to form object
         $field = new \Ip\Form\Field\Submit(
             array(
-                'name' => 'firstField', //html "name" attribute
-                'label' => 'First field', //field label that will be displayed next to input field
+                'name' => 'submit', //html "name" attribute
+                'label' => 'submit', //field label that will be displayed next to input field
                 'defaultValue' => 'Import site widget content from file'
             ));
         $form->addField($field);
@@ -49,7 +41,30 @@ class AdminController extends \Ip\Controller
         );
 
         $form->addField($field);
-        //print form
+
+
+
+        if (isset($_REQUEST['startImport'])) {
+
+            switch ($_REQUEST['startImport']) {
+                case 'import':
+                    $files = $fileField->getFiles($_POST, $fileField->getName());
+
+                    ipAddPluginAsset('ImportExport', 'importExport.js');
+
+                    foreach ($files as $file){
+                        $this->startImport($file);
+                    }
+
+                    return new \Ip\Response\Json($this->importLog);
+                default:
+                    return $this->showWaitMessage();
+            }
+        }
+
+
+
+
         $formHtml = $form->render();
 
         return $formHtml;
@@ -63,16 +78,16 @@ class AdminController extends \Ip\Controller
         return $renderedHtml;
     }
 
-    private function startImport()
+    private function startImport($fileName)
     {
-        $this->extractZip();
+        $this->extractZip($fileName);
         $this->importZones();
+
 
         $zones = ipContent()->getZones();
 
         $parentId = 0;
         $recursive = true;
-
 
 
         try {
@@ -81,39 +96,47 @@ class AdminController extends \Ip\Controller
 
                 $zoneName = $zone['nameForImporting'];
 
-//                $zone = ipContent()->getZone($zoneName);
-                $zoneId = $zone->getId();
+                $this->addLogRecord('ZONE NAME:' . $zoneName);
 
-                $recursive = true; //TODO
+                $zoneObj = ipContent()->getZone($zoneName);
 
+                $zoneId = $zoneObj->getId();
+
+                $recursive = true;
 
                 $languages = \Ip\Module\Pages\Db::getLanguages();
+
 
                 foreach ($languages as $key => $language) {
 
                     $language_id = $language['id'];
 
-                    $directory = ipConfig()->fileDirFile(
-                        'ImportExport/archive/' . $language['url'] . '_' . $language_id . '/' . $zone['nameInFile']
+                    $directory = ipFile(
+                        'file/ImportExport/archive/' . $language['url'] . '_' . $language_id . '/' . $zone['nameInFile']
                     );
 
+
+
                     if (file_exists($directory) || is_dir($directory)) {
-                        echo "<br>Processing:" . $directory;
+
+                        $this->addLogRecord("<br>Processing:" . $directory);
+
                         $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zoneId, $language_id);
 
                         $this->addZonePages($directory, $parentPageId, $recursive, $zoneName, $language);
 
 
                     } else {
-                        echo "<br>Skipping:" . $directory;
+                        $this->addLogRecord("Skipping:" . $directory);
                     }
                 }
             }
         } catch (\Exception $e) {
-            echo $e;
+            $this->addLogRecord("Skipping:" . $e);
         }
 
-        return 'test';
+        $this->addLogRecord('Finished importing');
+        return true;
     }
 
 
@@ -122,7 +145,7 @@ class AdminController extends \Ip\Controller
 
         $this->zonesForImporting = Array();
 
-        $string = file_get_contents(ipConfig()->fileDirFile('ImportExport/archive/zones.json'));
+        $string = file_get_contents(ipFile('file/ImportExport/archive/zones.json'));
         $zoneList = json_decode($string, true);
 
         foreach ($zoneList as $zone) {
@@ -134,14 +157,14 @@ class AdminController extends \Ip\Controller
                 $suffix = $suffix + 1;
             }
 
-            $zoneName = $prefix.$zone['name']. $suffix;
+            $zoneName = $prefix . $zone['name'] . $suffix;
             $zoneTitle = $zone['title'];
             $zoneDescription = $zone['description'];
             $zoneUrl = $zone['url'];
             $associatedModule = 'Content';
             $defaultLayout = 'main.php';
 
-            $zonesForImporting[] = Array(
+            $this->zonesForImporting[] = Array(
                 'nameInFile' => $zone['name'],
                 'nameForImporting' => $zoneName,
                 'title' => $zoneTitle,
@@ -151,17 +174,18 @@ class AdminController extends \Ip\Controller
                 'layout' => $defaultLayout
             );
 
-            try{
-            \Ip\Module\Pages\Service::addZone(
-                $zoneTitle,
-                $zoneName,
-                $associatedModule,
-                $defaultLayout,
-                null,
-                $zoneDescription,
-                $zoneUrl
-            );
-            }catch (\Exception $e){
+
+            try {
+                \Ip\Module\Pages\Service::addZone(
+                    $zoneTitle,
+                    $zoneName,
+                    $associatedModule,
+                    $defaultLayout,
+                    null,
+                    $zoneDescription,
+                    $zoneUrl
+                );
+            } catch (\Exception $e) {
                 throw new \Exception($e);
             }
 
@@ -169,21 +193,20 @@ class AdminController extends \Ip\Controller
         return true;
     }
 
-    private function extractZip()
+    private function extractZip($fileName)
     {
 
         try {
-            $zipLib = ipConfig()->pluginFile('ImportExport/lib/pclzip.lib.php');
+            $zipLib = ipFile('Plugin/ImportExport/lib/pclzip.lib.php');
             require_once($zipLib);
 
-            $archive = new \PclZip(ipConfig()->fileDirFile('ImportExport/archive.zip'));
+            $archive = new \PclZip(ipFile('file/secure/tmp'.$fileName));
 
-            if ($archive->extract(PCLZIP_OPT_PATH, ipConfig()->fileDirFile('ImportExport')) == 0) {
+            if ($archive->extract(PCLZIP_OPT_PATH, ipFile('file/secure/tmp')) == 0) {
                 die("Error : " . $archive->errorInfo(true));
             }
-
         } catch (\Exception $e) {
-            echo $e;
+            $this->addLogRecord($e);
         }
     }
 
@@ -207,34 +230,27 @@ class AdminController extends \Ip\Controller
 
         $parentPage = $zone->getPage($parentPageId);
 
-        $path = realpath(
-                ipConfig()->fileDirFile('ImportExport')
-            ) . '/archive/' . $languageDir . '_' . $language_id . '/' . $zoneName;
-
 
         //TODO get page data from JSON
         $buttonTitle = basename($fileName, ".json");
         $url = $buttonTitle;
 
-        print "Button title:" . $buttonTitle;
-
         $revisionId = \Ip\Revision::createRevision($zoneName, $pageId, true);
-
 
         $string = file_get_contents($fileName);
 
         $position = 0;
 
         $pageData = json_decode($string, true);
-        print "<br>Page data";
-        print_r($pageData);
+
         if (isset($pageData['widgets'])) {
 
             $widgetData = $pageData['widgets'];
 
             foreach ($widgetData as $widgetKey => $widgetValue) {
 
-                print "<br>Widget key:".$widgetKey;
+                $blockId = 'main';
+
                 if (isset($widgetValue['type'])) {
                     $widgetName = $widgetValue['type'];
 
@@ -256,7 +272,7 @@ class AdminController extends \Ip\Controller
                             $content['text'] = $widgetValue['text'];
                             $processWidget = true;
                             break;
-                        case 'IpTextImage': // Import IpTextImage as IpText
+                        case 'IpTextImage': //  IpTextImage as IpText
                             $widgetName = 'IpText';
                             $content['text'] = $widgetValue['text'];
                             $processWidget = true;
@@ -269,7 +285,6 @@ class AdminController extends \Ip\Controller
                             $content['html'] = $widgetValue['html'];
                             if (!isset($widgetValue['layout'])) {
                                 $layout = 'escape'; // default layout for code examples
-                                print "Set LAYOUT ESCAPE xxx";
                             }
 
                             $processWidget = true;
@@ -285,7 +300,7 @@ class AdminController extends \Ip\Controller
                             $widgetName,
                             $zoneName,
                             $pageId,
-                            'main',
+                            $blockId,
                             $revisionId,
                             $position
                         );
@@ -293,7 +308,7 @@ class AdminController extends \Ip\Controller
                         \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
 
                     } else {
-                        echo '<br>ERR:' . $widgetName . " not supported<br>";
+                        $this->addLogRecord('ERROR:' . $widgetName . " not supported");
                     }
                 }
 
@@ -314,12 +329,12 @@ class AdminController extends \Ip\Controller
 
                         if ($recursive) {
 
-                            $string = file_get_contents($directory . "/" . $file.".json");
+                            $string = file_get_contents($directory . "/" . $file . ".json");
                             $pageData = json_decode($string, true);
 
                             $pageSettings = $pageData['settings'];
                             $buttonTitle = $pageSettings['button_title'];
-                            $pageTitle =  $pageSettings['page_title'];
+                            $pageTitle = $pageSettings['page_title'];
                             $url = $pageSettings['url'];
 
                             $pageId = \Ip\Module\Content\Service::addPage(
@@ -334,14 +349,15 @@ class AdminController extends \Ip\Controller
 
                     } else {
                         $fileFullPath = $directory . "/" . $file;
-                        if (!is_dir(preg_replace("/\\.[^.\\s]{3,4}$/", "", $fileFullPath))){
+                        if (!is_dir(preg_replace("/\\.[^.\\s]{3,4}$/", "", $fileFullPath))) {
                             $string = file_get_contents($fileFullPath);
 
                             $pageData = json_decode($string, true);
                             $pageSettings = $pageData['settings'];
                             $buttonTitle = $pageSettings['button_title'];
-                            $pageTitle =  $pageSettings['page_title'];
+                            $pageTitle = $pageSettings['page_title'];
                             $url = $pageSettings['url'];
+
 
                             $pageId = \Ip\Module\Content\Service::addPage(
                                 $zoneName,
@@ -359,6 +375,12 @@ class AdminController extends \Ip\Controller
         }
         return $array_items;
     }
+
+    private function addLogRecord($msg)
+    {
+        $this->importLog[] = $msg;
+    }
+
 
 
 }
