@@ -2,9 +2,63 @@
 namespace Plugin\importExport;
 
 
+use Ip\Form\Exception;
+
 class AdminController extends \Ip\Controller
 {
     public function index()
+    {
+
+
+        $form = new \Ip\Form();
+
+        if (isset($_REQUEST['startImport'])){
+
+            switch ($_REQUEST['startImport']){
+                case 'import':
+                    $this->startImport();
+                    $data['test'] = 'test';
+                    return new \Ip\Response\Json($data);
+                break;
+                default:
+                    return $this->showWaitMessage();
+                break;
+            }
+        }
+
+
+        //add fields to form object
+        $field = new \Ip\Form\Field\Submit(
+            array(
+                'name' => 'firstField', //html "name" attribute
+                'label' => 'First field', //field label that will be displayed next to input field
+                'defaultValue' => 'Import site widget content from file'
+            ));
+        $form->addField($field);
+
+        $field = new \Ip\Form\Field\Hidden(
+            array(
+                'name' => 'startImport',
+                'defaultValue' => 'import'
+            )
+        );
+
+        $form->addField($field);
+        //print form
+        $formHtml = $form->render();
+
+        return $formHtml;
+
+    }
+
+    private function showWaitMessage()
+    {
+        $data = Array();
+        $renderedHtml = \Ip\View::create('View/view_wait.php', $data)->render();
+        return $renderedHtml;
+    }
+
+    private function startImport()
     {
         $this->extractZip();
         $this->importZones();
@@ -14,26 +68,13 @@ class AdminController extends \Ip\Controller
         $parentId = 0;
         $recursive = true;
 
-
-
-        $zoneData['id'] = 111;
-        $zoneData['name'] = 'TestName';
-        $zoneData['template'] = 'testTemplate';
-        $zoneData['title'] = 'Title';
-        $zoneData['url'] = 'URL';
-        $zoneData['keywords'] = '';
-        $zoneData['description'] = 'Test description';
-
         ipAddPluginAsset('ImportExport', 'importExport.js');
-        try {
 
+        try {
 
             foreach ($zones as $zone) {
 
-
                 $zoneName = $zone->getName();
-
-                print "PROCESSING ZONE:" . $zoneName;
 
 //                $zone = ipContent()->getZone($zoneName);
                 $zoneId = $zone->getId();
@@ -44,7 +85,6 @@ class AdminController extends \Ip\Controller
                 $languages = \Ip\Module\Pages\Db::getLanguages();
 
                 foreach ($languages as $key => $language) {
-                    print_r($language);
 
                     $language_id = $language['id'];
 
@@ -79,13 +119,20 @@ class AdminController extends \Ip\Controller
         $json_a = json_decode($string, true);
         foreach ($json_a as $zone) {
 
-            $zoneName = $zone['name'];
+            $curZoneName = $zone['name'];
+            $prefix = 'imported_';
+            $suffix = '';
+            while (ipContent()->getZone($prefix . $curZoneName . $suffix)) {
+                $suffix = $suffix + 1;
+            }
+
+            $zoneName = $prefix.$zone['name']. $suffix;
             $zoneTitle = $zone['title'];
             $zoneDescription = $zone['description'];
             $zoneUrl = $zone['url'];
             $associatedModule = 'Content';
             $defaultLayout = 'main.php';
-
+            try{
             \Ip\Module\Pages\Service::addZone(
                 $zoneTitle,
                 $zoneName,
@@ -95,7 +142,9 @@ class AdminController extends \Ip\Controller
                 $zoneDescription,
                 $zoneUrl
             );
-
+            }catch (\Exception $e){
+                throw new \Exception($e);
+            }
 
         }
         return true;
