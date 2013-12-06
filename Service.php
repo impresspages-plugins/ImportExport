@@ -18,6 +18,7 @@ class Service
         $extractedDirName = $this->extractZip($uploadedFile);
         $this->importSiteTree($extractedDirName);
 
+
         $zones = ipContent()->getZones();
 
         $parentId = 0;
@@ -40,28 +41,38 @@ class Service
                 $languages = \Ip\Module\Pages\Db::getLanguages();
 
 
+
                 foreach ($this->languagesForImporting as $language) {
+
+//                    $this->addLogRecord('Processing language: ' . $language['url'], 'info');
 
 
                     $language_id = $language['id'];
+
+
 
                     $directory = ipFile(
                         'file/secure/tmp/' . $extractedDirName .'/archive/'. $language['url'] . '_' . $zone['nameInFile']
                     );
 
+
+
                     if (is_dir($directory)) {
 
-                        $this->addLogRecord("Processing:" . $directory);
+//                        $this->addLogRecord("Processing:" . $directory);
 
                         $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zoneId, $language_id);
 
+
                         $this->addZonePages($directory, $parentPageId, $recursive, $zoneName, $language);
 
-                    } else {
-                        $this->addLogRecord("Skipping: Directory " . $directory.' does not exist.');
                     }
+
                 }
+
             }
+
+
         } catch (\Exception $e) {
             $this->addLogRecord("Skipping:" . $e);
         }
@@ -84,6 +95,8 @@ class Service
         $this->addLogRecord('Importing version '.$version, 'info');
 
         $this->importZones($siteData['zones']);
+
+
         $this->importLanguages($siteData['languages']);
 
         return true;
@@ -117,7 +130,6 @@ class Service
                 'layout' => $defaultLayout
             );
 
-
             try {
                 \Ip\Module\Pages\Service::addZone(
                     $zoneTitle,
@@ -134,6 +146,7 @@ class Service
 
         }
 
+
         return true;
 
     }
@@ -142,14 +155,17 @@ class Service
     {
 
         foreach ($languageList as $language){
-            print_r($language);
             if (!Model::languageExists($language['url'])){
 
                 \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
 
             }
+            //TODO
 
+
+            $this->languagesForImporting[] = \Ip\Module\Pages\LanguageModel::getLanguageByUrl($language['url']);
         }
+
         return true;
     }
 
@@ -196,6 +212,9 @@ class Service
         $language_id = $language['id'];
         $languageDir = $language['url'];
 
+
+
+//        $this->addLogRecord('Importing widgets from '.$fileName, 'info');
 
         $zone = ipContent()->getZone($zoneName);
 
@@ -244,42 +263,44 @@ class Service
                     }
 
                     if (isset($widgetValue['data'])){
+
                         $widgetData = $widgetValue['data'];
 
-                        switch ($widgetName) {
-                            case 'IpSeparator':
-                                $content = null;
-                                $processWidget = true;
-                                break;
-                            case 'IpTable':
-                                $content['text'] = $widgetData['text'];
-                                $processWidget = true;
-                                break;
-                            case 'IpText':
-                                $content['text'] = $widgetData['text'];
-                                $processWidget = true;
-                                break;
-                            case 'IpTextImage': //  IpTextImage as IpText
-                                $widgetName = 'IpText';
-                                $content['text'] = $widgetData['text'];
-                                $processWidget = true;
-                                break;
-                            case 'IpTitle':
-                                $content['title'] = $widgetData['title'];
-                                $processWidget = true;
-                                break;
-                            case 'IpHtml':
-                                $content['html'] = $widgetData['html'];
-                                if (!isset($widgetValue['layout'])) {
-                                    $layout = 'escape'; // default layout for code examples
-                                }
+                    }
 
-                                $processWidget = true;
-                                break;
-                            default:
-                                $content = null;
-                                break;
-                        }
+                    switch ($widgetName) {
+                        case 'IpSeparator':
+                            $content = null;
+                            $processWidget = true;
+                            break;
+                        case 'IpTable':
+                            $content['text'] = $widgetData['text'];
+                            $processWidget = true;
+                            break;
+                        case 'IpText':
+                            $content['text'] = $widgetData['text'];
+                            $processWidget = true;
+                            break;
+                        case 'IpTextImage': //  IpTextImage as IpText
+                            $widgetName = 'IpText';
+                            $content['text'] = $widgetData['text'];
+                            $processWidget = true;
+                            break;
+                        case 'IpTitle':
+                            $content['title'] = $widgetData['title'];
+                            $processWidget = true;
+                            break;
+                        case 'IpHtml':
+                            $content['html'] = $widgetData['html'];
+                            if (!isset($widgetValue['layout'])) {
+                                $layout = 'escape'; // default layout for code examples
+                            }
+
+                            $processWidget = true;
+                            break;
+                        default:
+                            $content = null;
+                            break;
                     }
 
                     if ($processWidget) {
@@ -309,7 +330,12 @@ class Service
 
     private function addZonePages($directory, $parentId, $recursive, $zoneName, $language)
     {
+
+
+
         $array_items = array();
+
+
         if ($handle = opendir($directory)) {
             while (false !== ($file = readdir($handle))) {
                 if ($file != "." && $file != "..") {
@@ -358,7 +384,10 @@ class Service
                                 $pageTitle,
                                 $url
                             );
+
                             $this->importWidgets($fileFullPath, $pageId, $zoneName, $language);
+
+
                         }
                     }
                 }

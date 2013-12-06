@@ -32,6 +32,9 @@ class AdminController extends \Ip\Controller
 
         $service = New Service();
 
+
+
+
         foreach ($files as $file){
 
             $service->startImport($file);
