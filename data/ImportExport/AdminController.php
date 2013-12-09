@@ -1,14 +1,15 @@
 <?php
-namespace Plugin\ImportExport;
+namespace Modules\data\ImportExport;
 
 
-use Ip\Form\Exception;
+use \Modules\developer\Form\Exception;
 
 class AdminController extends \Ip\Controller
 {
 
     public function index()
     {
+        global $site;
 
         $form = Model::getForm();
 
@@ -18,7 +19,7 @@ class AdminController extends \Ip\Controller
 
         $view = \Ip\View::create('view/index.php', $data);
 
-        ipAddJavascript(ipFileUrl('Plugin/ImportExport/assets/importExport.js'));
+        $site->addJavascript(BASE_URL.PLUGIN_DIR.'data/ImportExport/public/importExport.js');
 
         return $view->render();
     }
@@ -33,8 +34,6 @@ class AdminController extends \Ip\Controller
         $service = New Service();
 
 
-
-
         foreach ($files as $file){
 
             $service->startImport($file);
@@ -43,6 +42,7 @@ class AdminController extends \Ip\Controller
 
         $response['log'] =   $service->getImportLog();
         $response['status'] =   'success';
-        return new \Ip\Response\Json($response);
+
+        return new json_encode($response);
     }
 }

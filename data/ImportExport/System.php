@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugin\importExport;
+namespace Modules\data\importExport;
 
 
 class System {

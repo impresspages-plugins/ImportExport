@@ -1,5 +1,5 @@
 <?php
-namespace Plugin\ImportExport;
+namespace Modules\data\ImportExport;
 
 use Ip\Module\Languages\Db;
 
@@ -12,6 +12,8 @@ class Service
 
     public function startImport($uploadedFile)
     {
+
+        global $site;
 
         $this->addLogRecord('Starting importing the site. '.$uploadedFile->getOriginalFileName(), 'info');
 
@@ -44,26 +46,17 @@ class Service
 
                 foreach ($this->languagesForImporting as $language) {
 
-//                    $this->addLogRecord('Processing language: ' . $language['url'], 'info');
-
-
                     $language_id = $language['id'];
-
-
 
                     $directory = ipFile(
                         'file/secure/tmp/' . $extractedDirName .'/archive/'. $language['url'] . '_' . $zone['nameInFile']
                     );
-
-
 
                     if (is_dir($directory)) {
 
 //                        $this->addLogRecord("Processing:" . $directory);
 
                         $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zoneId, $language_id);
-
-
                         $this->addZonePages($directory, $parentPageId, $recursive, $zoneName, $language);
 
                     }

@@ -1,15 +1,15 @@
 <?php
-namespace Plugin\ImportExport;
+namespace Modules\data\ImportExport;
 
 class Model
 {
 
     public static function getForm()
     {
-        $form = new \Ip\Form();
+        $form = new  \Modules\developer\form\Form();
 
 
-        $field = new \Ip\Form\Field\File(
+        $field = new \Modules\developer\form\Field\File(
             array(
                 'name' => 'siteFile', //html "name" attribute
                 'label' => 'ZIP file:', //field label that will be displayed next to input field
@@ -18,7 +18,7 @@ class Model
         $fileField = $field;
 
 
-        $field = new \Ip\Form\Field\Submit(
+        $field = new \Modules\developer\form\Field\Submit(
             array(
                 'name' => 'submit', //html "name" attribute
                 'label' => 'submit', //field label that will be displayed next to input field
@@ -26,7 +26,7 @@ class Model
             ));
         $form->addField($field);
 
-        $field = new \Ip\Form\Field\Hidden(
+        $field = new \Modules\developer\form\Field\Hidden(
             array(
                 'name' => 'action',
                 'defaultValue' => 'import'
@@ -35,7 +35,7 @@ class Model
 
         $form->addField($field);
 
-        $field = new \Ip\Form\Field\Hidden(
+        $field = new \Modules\developer\form\Field\Hidden(
             array(
                 'name' => 'aa',
                 'defaultValue' => 'ImportExport.import'
@@ -48,7 +48,9 @@ class Model
     public static function languageExists($url)
     {
 
-        $ra =  \Ip\Module\Languages\Db::getLanguageByUrl($url);
+        global $site;
+
+        $ra =  $site->getLanguageByUrl($url);
 
         if (isset($ra['id'])){
             return true;
