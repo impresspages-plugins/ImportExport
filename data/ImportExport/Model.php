@@ -4,7 +4,7 @@ namespace Modules\data\ImportExport;
 class Model
 {
 
-    public static function getForm()
+    public static function getFormImport()
     {
         $form = new  \Modules\developer\form\Form();
 
@@ -22,7 +22,7 @@ class Model
 
         $field = new \Modules\developer\form\Field\Submit(
             array(
-                'name' => 'submit', //html "name" attribute
+                'name' => 'submitImport', //html "name" attribute
                 'label' => 'submit', //field label that will be displayed next to input field
                 'defaultValue' => 'Import site widget content from file'
             ));
@@ -41,6 +41,55 @@ class Model
             array(
                 'name' => 'aa',
                 'defaultValue' => 'import'
+            ));
+        $form->addField($field);
+
+        $field = new \Modules\developer\form\Field\Hidden(
+            array(
+                'name' => 'g',
+                'defaultValue' => 'data'
+            ));
+        $form->addField($field);
+
+        $field = new \Modules\developer\form\Field\Hidden(
+            array(
+                'name' => 'm',
+                'defaultValue' => 'ImportExport'
+            ));
+        $form->addField($field);
+
+        return $form;
+    }
+
+    public static function getFormExport()
+    {
+
+        $form = new  \Modules\developer\form\Form();
+
+        $form->setAction(BASE_URL);
+
+        $field = new \Modules\developer\form\Field\Submit(
+            array(
+                'name' => 'submitExport', //html "name" attribute
+                'label' => 'submitExport', //field label that will be displayed next to input field
+                'defaultValue' => 'Export site to ZIP'
+            ));
+
+        $form->addField($field);
+
+        $field = new \Modules\developer\form\Field\Hidden(
+            array(
+                'name' => 'action',
+                'defaultValue' => 'export'
+            )
+        );
+
+        $form->addField($field);
+
+        $field = new \Modules\developer\form\Field\Hidden(
+            array(
+                'name' => 'aa',
+                'defaultValue' => 'export'
             ));
         $form->addField($field);
 
@@ -152,8 +201,6 @@ class Model
             //TODOX service must not return Response object.
             throw new Exception( 'Cannot add instance for page id ' . $pageId. '');
         }
-
-//        print "<br>INSTANCE ID ".$instanceId;
 
         return $instanceId;
 

@@ -3,13 +3,41 @@ var ipExportImport = new function () {
 
 
     this.init = function () {
-        $('form').validator(validatorConfig);
-        $('form').submit(function (e) {
+
+        $('.ipsExportForm form').validator(validatorConfig);
+
+        $('.ipsExportForm form').submit(function (e) {
             var form = $(this);
 
             // client-side validation OK.
             if (!e.isDefaultPrevented()) {
+                $('.ipsLoading').removeClass('ipgHide');
+                $('.ipsImportForm').addClass('ipgHide');
 
+                $.ajax({
+                    url: ip.baseUrl, //we assume that for already has m, g, a parameters which will lead this request to required controller
+                    dataType: 'json',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: processExport,
+                    error: showError
+
+                });
+            }
+            e.preventDefault();
+        });
+
+        var processExportResponse = function (response) {
+
+            alert('testing'); //TODO  replace Export
+        }
+
+        $('.ipsImportForm form').validator(validatorConfig);
+        $('.ipsImportForm form').submit(function (e) {
+            var form = $(this);
+
+            // client-side validation OK.
+            if (!e.isDefaultPrevented()) {
                 $('.ipsLoading').removeClass('ipgHide');
                 $('.ipsImportForm').addClass('ipgHide');
 
@@ -26,7 +54,6 @@ var ipExportImport = new function () {
             e.preventDefault();
         });
     };
-
 
     var processResponse = function (response) {
         if (response.status && response.status == 'success') {

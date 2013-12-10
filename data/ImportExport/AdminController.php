@@ -11,10 +11,12 @@ class AdminController extends \Ip\Controller
     {
         global $site;
 
-        $form = Model::getForm();
+        $formImport = Model::getFormImport();
+        $formExport = Model::getFormExport();
 
         $data = array (
-            'form' => $form
+            'formImport' => $formImport,
+            'formExport' => $formExport
         );
 
         $view = \Ip\View::create('view/index.php', $data);
@@ -26,7 +28,7 @@ class AdminController extends \Ip\Controller
 
     public function import()
     {
-        $form = Model::getForm();
+        $form = Model::getFormImport();
 
         $fileField = $form->getField('siteFile');
         $files = $fileField->getFiles($_POST, $fileField->getName());
@@ -44,5 +46,9 @@ class AdminController extends \Ip\Controller
         $response['status'] =   'success';
 
         return $this->returnJson($response);
+    }
+
+    public function export(){
+        print "TEST: Data export will be here"; //TODO Add exporting
     }
 }

@@ -1,4 +1,4 @@
-<div class="ipsImportForm"><?php echo $form->render(); ?></div>
+<div class="ipsImportForm"><?php echo $formImport->render(); ?></div>
 
 
 <div class="ipsLoading ipgHide">
@@ -8,3 +8,6 @@
 <div class="ipsLog ipgHide">
     <div class="alert ipsLogRecord ipgHide"></div>
 </div>
+
+<div class="ipsExportForm"><?php echo $formExport->render(); ?></div>
+
