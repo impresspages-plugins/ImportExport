@@ -1,7 +1,7 @@
 <?php
 namespace Modules\data\ImportExport;
 
-use Ip\Module\Languages\Db;
+//use Ip\Module\Languages\Db;
 
 class Service
 {
@@ -21,7 +21,7 @@ class Service
         $this->importSiteTree($extractedDirName);
 
 
-        $zones = ipContent()->getZones();
+        $zones = $site->getZones();
 
         $parentId = 0;
         $recursive = true;
@@ -34,29 +34,28 @@ class Service
 
                 $this->addLogRecord('ZONE NAME: ' . $zoneName, 'info');
 
-                $zoneObj = ipContent()->getZone($zoneName);
-
-                $zoneId = $zoneObj->getId();
+                $zoneId = Model::getZoneIdByName($zoneName);
 
                 $recursive = true;
 
-                $languages = \Ip\Module\Pages\Db::getLanguages();
+                $languages = $site->getLanguages();
 
 
 
                 foreach ($this->languagesForImporting as $language) {
 
                     $language_id = $language['id'];
+                    $language_url =  $language['url'];
 
-                    $directory = ipFile(
-                        'file/secure/tmp/' . $extractedDirName .'/archive/'. $language['url'] . '_' . $zone['nameInFile']
-                    );
+                    $directory = BASE_DIR.
+                        'file/secure/tmp/' . $extractedDirName .'/archive/'. $language_url .
+                        '_' . $zone['nameInFile'];
 
                     if (is_dir($directory)) {
 
 //                        $this->addLogRecord("Processing:" . $directory);
 
-                        $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zoneId, $language_id);
+                        $parentPageId = \Modules\standard\menu_management\Db::rootContentElement($zoneId, $language_id);
                         $this->addZonePages($directory, $parentPageId, $recursive, $zoneName, $language);
 
                     }
@@ -80,7 +79,7 @@ class Service
         $this->zonesForImporting = Array();
         $this->languagesForImporting = Array();
 
-        $string = file_get_contents(ipFile('file/secure/tmp/' . $extractedDirName . '/archive/info.json'));
+        $string = file_get_contents(BASE_DIR.'file/secure/tmp/' . $extractedDirName . '/archive/info.json');
         $siteData = json_decode($string, true);
 
         $version = $siteData['version'];
@@ -97,12 +96,14 @@ class Service
 
     private function importZones($zoneList){
 
+        global $site;
+
         foreach ($zoneList as $zone) {
 
             $curZoneName = $zone['name'];
             $prefix = 'imported_';
             $suffix = '';
-            while (ipContent()->getZone($prefix . $curZoneName . $suffix)) {
+            while ($site->getZone($prefix . $curZoneName . $suffix)) {
                 $suffix = $suffix + 1;
             }
 
@@ -110,7 +111,7 @@ class Service
             $zoneTitle = $zone['title'];
             $zoneDescription = $zone['description'];
             $zoneUrl = $zone['url'];
-            $associatedModule = 'Content';
+            $associatedModule = 'content_management';
             $defaultLayout = 'main.php';
 
             $this->zonesForImporting[] = Array(
@@ -124,15 +125,20 @@ class Service
             );
 
             try {
-                \Ip\Module\Pages\Service::addZone(
+                $zoneId = Model::addZone(
                     $zoneTitle,
                     $zoneName,
                     $associatedModule,
                     $defaultLayout,
-                    null,
+                    'standard',
                     $zoneDescription,
                     $zoneUrl
                 );
+
+                global $parametersMod;
+                $parametersMod = new \ParametersMod();
+                \Modules\developer\zones\Db::afterInsert($zoneId);
+
             } catch (\Exception $e) {
                 throw new \Exception($e);
             }
@@ -147,16 +153,20 @@ class Service
     private function importLanguages($languageList)
     {
 
+        global $site;
+
+
+
         foreach ($languageList as $language){
             if (!Model::languageExists($language['url'])){
 
-                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
+                self::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
 
             }
             //TODO
 
 
-            $this->languagesForImporting[] = \Ip\Module\Pages\LanguageModel::getLanguageByUrl($language['url']);
+            $this->languagesForImporting[] = Model::getLanguageByUrl($language['url']);
         }
 
         return true;
@@ -169,16 +179,16 @@ class Service
         $fileName = $file->getOriginalFileName();
 
         try {
-            $zipLib = ipFile('Plugin/ImportExport/lib/pclzip.lib.php');
+            $zipLib = BASE_DIR.PLUGIN_DIR.'data/ImportExport/lib/pclzip.lib.php';
             require_once($zipLib);
 
-            $archive = new \PclZip(ipFile('file/secure/tmp/' . $fileName));
+            $archive = new \PclZip(BASE_DIR.'file/secure/tmp/' . $fileName);
 
             $zipNameNoExt = basename($fileName, '.zip');
             $extractSubDir = $zipNameNoExt;
             $count = 0;
-            while (is_file(ipFile('file/secure/tmp/' . $extractSubDir)) || is_dir(
-                    ipFile('file/secure/tmp/' . $extractSubDir)
+            while (is_file(BASE_DIR.'file/secure/tmp/' . $extractSubDir) || is_dir(
+                    BASE_DIR.'file/secure/tmp/' . $extractSubDir
                 )) {
                 $count++;
                 $extractSubDir = $zipNameNoExt . '_' . $count;
@@ -186,7 +196,7 @@ class Service
 
             if ($archive->extract(
                     PCLZIP_OPT_PATH,
-                    ipFile('file/secure/tmp'),
+                    BASE_DIR.'file/secure/tmp',
                     PCLZIP_OPT_ADD_PATH,
                     $extractSubDir
                 ) == 0
@@ -202,6 +212,8 @@ class Service
     private function importWidgets($fileName, $pageId, $zoneName, $language)
     {
 
+        global $site;
+
         $language_id = $language['id'];
         $languageDir = $language['url'];
 
@@ -209,19 +221,14 @@ class Service
 
 //        $this->addLogRecord('Importing widgets from '.$fileName, 'info');
 
-        $zone = ipContent()->getZone($zoneName);
+        $zone = $site->getZone($zoneName);
 
-        $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zone->getId(), $language_id);
-
+        $parentPageId = \Modules\standard\menu_management\Db::rootContentElement(Model::getZoneIdByName($zoneName), $language_id);
 
         if ($parentPageId === false) {
             trigger_error("Can't find root zone element.");
-
             return false;
         }
-
-        $parentPage = $zone->getPage($parentPageId);
-
 
         //TODO get page data from JSON
         $buttonTitle = basename($fileName, ".json");
@@ -260,7 +267,6 @@ class Service
                         $widgetData = $widgetValue['data'];
 
                     }
-
                     switch ($widgetName) {
                         case 'IpSeparator':
                             $content = null;
@@ -298,7 +304,7 @@ class Service
 
                     if ($processWidget) {
                         $position++;
-                        $instanceId = \Ip\Module\Content\Service::addWidget(
+                        $instanceId = Model::addWidget(
                             $widgetName,
                             $zoneName,
                             $pageId,
@@ -307,7 +313,7 @@ class Service
                             $position
                         );
 
-                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
+                       Model::addWidgetContent($instanceId, $content, $layout);
 
                     } else {
                         $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
@@ -340,17 +346,24 @@ class Service
                                 $string = file_get_contents($pageFileNamePath);
                                 $pageData = json_decode($string, true);
 
+
                                 $pageSettings = $pageData['settings'];
+
                                 $buttonTitle = $pageSettings['button_title'];
                                 $pageTitle = $pageSettings['page_title'];
+                                $position = $pageSettings['row_number'];
                                 $url = $pageSettings['url'];
+                                $visible = $pageSettings['visible'];
 
-                                $pageId = \Ip\Module\Content\Service::addPage(
+
+                                $pageId = Model::addPage(
                                     $zoneName,
                                     $parentId,
                                     $buttonTitle,
                                     $pageTitle,
-                                    $url
+                                    $url,
+                                    $position,
+                                    $visible
                                 );
                                 $this->addZonePages($directory . "/" . $file, $pageId, $recursive, $zoneName, $language);
                             }else{
@@ -365,21 +378,24 @@ class Service
 
                             $pageData = json_decode($string, true);
                             $pageSettings = $pageData['settings'];
+
                             $buttonTitle = $pageSettings['button_title'];
                             $pageTitle = $pageSettings['page_title'];
+                            $position = $pageSettings['row_number'];
                             $url = $pageSettings['url'];
+                            $visible = $pageSettings['visible'];
 
-
-                            $pageId = \Ip\Module\Content\Service::addPage(
+                            $pageId = Model::addPage(
                                 $zoneName,
                                 $parentId,
                                 $buttonTitle,
                                 $pageTitle,
-                                $url
+                                $url,
+                                $position,
+                                $visible
                             );
 
                             $this->importWidgets($fileFullPath, $pageId, $zoneName, $language);
-
 
                         }
                     }
@@ -400,4 +416,42 @@ class Service
     {
         return $this->importLog;
     }
+
+
+    public function addLanguage($code, $url, $d_long = '', $d_short = '', $visible = true, $text_direction='ltr'){
+
+        if (($code!='') && ($url!='')){
+
+            $dbh = \Ip\Db::getConnection();
+
+            $data = Array();
+            $data['code'] = $code;
+            $data['url'] = $url;
+            $data['d_long'] = $d_long;
+            $data['d_short'] = $d_short;
+            $data['visible'] = $visible;
+            $data['text_direction'] = $text_direction;
+
+
+            $sql = "INSERT INTO `".DB_PREF."language`
+                (code, url, d_long, d_short, visible, text_direction)
+                VALUES
+                (:code, :url, :d_long, :d_short, :visible, :text_direction)";
+
+
+//            $id = IpDb()->insert(DB_PREF . 'language', $data);
+
+            $sth = $dbh->prepare($sql);
+
+            $sth->execute($data);
+
+
+//TODO            $this->afterInsert($id);
+
+            return true;
+        }else{
+            trigger_error("Can't create language. Missing URL or language code.");
+        }
+    }
+
 }

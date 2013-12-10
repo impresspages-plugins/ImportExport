@@ -43,6 +43,6 @@ class AdminController extends \Ip\Controller
         $response['log'] =   $service->getImportLog();
         $response['status'] =   'success';
 
-        return new json_encode($response);
+        return $this->returnJson($response);
     }
 }
