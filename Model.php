@@ -7,6 +7,7 @@ class Model
     public static function getForm()
     {
         $form = new \Ip\Form();
+        $form->addClass('ipsImportExportForm');
 
 
         $field = new \Ip\Form\Field\File(
@@ -21,6 +22,7 @@ class Model
             array(
                 'value' => 'Import site widget content from file'
             ));
+        $field->addClass('ipsImportExportSubmit');
         $form->addField($field);
 
         $field = new \Ip\Form\Field\Hidden(

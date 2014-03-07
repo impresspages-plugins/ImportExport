@@ -1,95 +1,84 @@
-var ipExportImport = new function () {
-    "use strict";
+(function($){
 
-    var $this = $(this);
+    var ipExportImport = new function () {
+        "use strict";
 
-
-    this.init = function () {
-//        $('form').validator(validatorConfig);
+        var $this = $(this);
 
 
-        $('form').submit(function (e) {
-            var form = $(this);
+        this.init = function () {
+    //        $('form').validator(validatorConfig);
+            $('.ipsImportExportForm').on('ipSubmitResponse', processResponse);
+            $('.ipsImportExportForm').on('submit', showProgressIndicator);
 
-            // client-side validation OK.
-            if (!e.isDefaultPrevented()) {
+        };
 
-                $('.ipsLoading').removeClass('hidden');
-                $('.ipsImportForm').addClass('hidden');
+        var showProgressIndicator = function () {
+            $('.ipsLoading').removeClass('hidden');
+            $('.ipsFileContainer').addClass('hidden');
+            $('.ipsImportExportSubmit').addClass('hidden');
+        }
 
-                $.ajax({
-                    url: ip.baseUrl,
-                    dataType: 'json',
-                    type: 'POST',
-                    data: form.serialize(),
-                    success: processResponse,
-                    error: showError
+        var processResponse = function (event, response) {
+            if (response.status && response.status == 'success') {
+                //form has been successfully submitted.
+
+
+                $('.ipsLoading').addClass('hidden');
+
+                var toClone = $('.ipsLogRecord').first();
+
+                response.log.forEach(function (logRecord) {
+
+                    var newClone = toClone.clone();
+
+                    newClone.html(logRecord.message);
+                    switch (logRecord.status) {
+                        case 'danger':
+                            newClone.addClass('alert-danger');
+                            break;
+                        case 'info':
+                            newClone.addClass('alert-info');
+                            break;
+                        case 'success':
+                            newClone.addClass('alert-success');
+                            break;
+                        case 'warning':
+                            newClone.addClass('alert-warning');
+                            break;
+                        default:
+                            newClone.addClass('alert-warning');
+                    }
+
+                    $('.ipsLog').append(newClone);
+
 
                 });
-            }
-            e.preventDefault();
-        });
-    };
 
+                $('.ipsLogRecord').first().remove();
 
-    var processResponse = function (response) {
-        if (response.status && response.status == 'success') {
-            //form has been successfully submitted.
+                $('.ipsLog').removeClass('hidden');
+                $('.ipsLogRecord').removeClass('hidden');
 
-
-            $('.ipsLoading').addClass('hidden');
-
-            var toClone = $('.ipsLogRecord').first();
-
-            response.log.forEach(function (logRecord) {
-
-                var newClone = toClone.clone();
-
-                newClone.html(logRecord.message);
-                switch (logRecord.status) {
-                    case 'danger':
-                        newClone.addClass('alert-danger');
-                        break;
-                    case 'info':
-                        newClone.addClass('alert-info');
-                        break;
-                    case 'success':
-                        newClone.addClass('alert-success');
-                        break;
-                    case 'warning':
-                        newClone.addClass('alert-warning');
-                        break;
-                    default:
-                        newClone.addClass('alert-warning');
+            } else {
+                //PHP controller says there are some errors
+                if (response.errors) {
+                    form.data("validator").invalidate(response.errors);
                 }
-
-                $('.ipsLog').append(newClone);
-
-
-            });
-
-            $('.ipsLogRecord').first().remove();
-
-            $('.ipsLog').removeClass('hidden');
-            $('.ipsLogRecord').removeClass('hidden');
-
-        } else {
-            //PHP controller says there are some errors
-            if (response.errors) {
-                form.data("validator").invalidate(response.errors);
             }
+        };
+
+        var showError = function (response) {
+            alert(response);
         }
+
+
     };
 
-    var showError = function (response) {
-        alert(response);
-    }
 
+    $(document).ready(function () {
+        "use strict";
+        ipExportImport.init();
+    });
 
-};
-
-
-$(document).ready(function () {
-    "use strict";
-    ipExportImport.init();
-});
+})(ip.jQuery);

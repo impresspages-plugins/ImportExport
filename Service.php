@@ -110,18 +110,12 @@ class Service
             );
 
             try {
-//                \Ip\Module\Pages\Service::addZone(
-//                        $zoneTitle,
-//                        $zoneName,
-//                        $associatedModule,
-//                        $defaultLayout,
-//                        null,
-//                        $zoneDescription,
-//                    $zoneUrl
 
                 $menuExists = \Ip\Internal\Pages\Service::getMenu('en', $menuName);
-                if (!isset($menuExists['isDeleted']) || ($menuExists['isDeleted'] == '0')){
-                    \Ip\Internal\Pages\Service::createMenu('en', $menuName, $menuName);
+                if (!isset($menuExists['isDeleted']) || ($menuExists['isDeleted'] == '1')){
+                    \Ip\Internal\Pages\Service::createMenu('en', $menuName, $menuTitle);
+                }else{
+                    $this->addLogRecord('Menu '.$menuName.' already exists. Importing anyway.', 'error');
                 }
 
             } catch (\Exception $e) {
