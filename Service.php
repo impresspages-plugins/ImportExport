@@ -5,7 +5,7 @@ namespace Plugin\ImportExport;
 class Service
 {
 
-    private $zonesForImporting = Array(),
+    private $menusForImporting = Array(),
         $languagesForImporting = Array(),
         $importLog = Array();
 
@@ -29,26 +29,26 @@ class Service
 
         try {
 
-            foreach ($this->zonesForImporting as $zone) {
+            foreach ($this->menusForImporting as $menuItem) {
 
-                $zoneName = $zone['nameForImporting'];
-                $this->addLogRecord('ZONE NAME: ' . $zoneName, 'info');
+                $menuName = $menuItem['nameForImporting'];
+                $this->addLogRecord('MENU NAME: ' . $menuName, 'info');
                 $recursive = true;
                 $this->addLogRecord('Processing language: ' . $language->getCode(), 'info');
-                $menu = \Ip\Internal\Pages\Service::getMenu($languageCode, $zoneName);
+                $menu = \Ip\Internal\Pages\Service::getMenu($languageCode, $menuName);
                 $parentSubPageId = $menu['id'];
 
                 $pageData = array('languageCode' =>  $language->getCode());
 
                 $directory = ipFile(
-                    'file/secure/tmp/' . $extractedDirName .'/archive/'. $language->getUrl() . '_' . $zone['nameInFile']
+                    'file/secure/tmp/' . $extractedDirName .'/archive/'. $language->getUrl() . '_' . $menuItem['nameInFile']
                 );
 
                 if (is_dir($directory)) {
 
                     $this->addLogRecord("Processing:" . $directory);
 
-                    $this->addZonePages($directory, $parentSubPageId, $recursive, $zoneName, $language);
+                    $this->addPages($directory, $parentSubPageId, $recursive, $menuName, $language);
 
                 }
             }
@@ -65,7 +65,7 @@ class Service
     private function importSiteTree($extractedDirName)
     {
 
-        $this->zonesForImporting = Array();
+        $this->menusForImporting = Array();
         $this->languagesForImporting = Array();
 
         $string = file_get_contents(ipFile('file/secure/tmp/' . $extractedDirName . '/archive/info.json'));
@@ -77,35 +77,34 @@ class Service
 
         $this->importLanguages($siteData['languages']);
 
-        $this->importZones($siteData['zones']);
+        $this->importMenus($siteData['menuLists']);
 
         return true;
     }
 
-    private function importZones($zoneList){
+    private function importMenus($menuList){
 
-        foreach ($zoneList as $zone) {
+        foreach ($menuList as $menu) {
 
-            $curZoneName = $zone['name'];
             $prefix = 'imported_';
             $suffix = ''; // TODO Add a prefix if page with specific name already exists
-//            while (ipContent()->getZone($prefix . $curZoneName . $suffix)) {
+//            while (ipContent()->getPage($prefix . $curZoneName . $suffix)) {
 //                $suffix = $suffix + 1;
 //            }
 
-            $zoneName = $prefix . $zone['name'] . $suffix;
-            $zoneTitle = $zone['title'];
-            $zoneDescription = $zone['description'];
-            $zoneUrl = $zone['url'];
+            $menuName = $prefix . $menu['name'] . $suffix;
+            $menuTitle = $menu['title'];
+            $menuDescription = $menu['description'];
+            $menuUrl = $menu['url'];
             $associatedModule = 'Content';
             $defaultLayout = 'main.php';
 
-            $this->zonesForImporting[] = Array(
-                'nameInFile' => $zone['name'],
-                'nameForImporting' => $zoneName,
-                'title' => $zoneTitle,
-                'description' => $zoneDescription,
-                'url' => $zoneUrl,
+            $this->menusForImporting[] = Array(
+                'nameInFile' => $menu['name'],
+                'nameForImporting' => $menuName,
+                'title' => $menuTitle,
+                'description' => $menuDescription,
+                'url' => $menuUrl,
                 'associatedModule' => $associatedModule,
                 'layout' => $defaultLayout
             );
@@ -120,9 +119,9 @@ class Service
 //                        $zoneDescription,
 //                    $zoneUrl
 
-                $menuExists = \Ip\Internal\Pages\Service::getMenu('en', $zoneName);
+                $menuExists = \Ip\Internal\Pages\Service::getMenu('en', $menuName);
                 if (!isset($menuExists['isDeleted']) || ($menuExists['isDeleted'] == '0')){
-                    \Ip\Internal\Pages\Service::createMenu('en', $zoneName, $zoneName);
+                    \Ip\Internal\Pages\Service::createMenu('en', $menuName, $menuName);
                 }
 
             } catch (\Exception $e) {
@@ -196,7 +195,7 @@ class Service
         return $extractSubDir;
     }
 
-    private function importWidgets($fileName, $pageId, $zoneName, $language)
+    private function importWidgets($fileName, $pageId, $menuName, $language)
     {
 
         $pageRevision = \Ip\Internal\Revision::getLastRevision($pageId);
@@ -299,9 +298,9 @@ class Service
                         // createWidget
                         // addWidgetInstance($widgetId, $revisionId, $languageId, $block, $position, $visible = true)
 //                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
-                        $this->addLogRecord('Widget ' . $widgetName . " added. File name: ".$fileName.", Menu name: ".$zoneName. ", Language: ".$languageDir, 'danger');
+                        $this->addLogRecord('Widget ' . $widgetName . " added. File name: ".$fileName.", Menu name: ".$menuName. ", Language: ".$languageDir, 'danger');
                     } else {
-                        $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
+                        $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$menuName. ", Language: ".$languageDir, 'danger');
                     }
                 }
 
@@ -312,7 +311,7 @@ class Service
     }
 
 
-    private function addZonePages($directory, $parentId, $recursive, $zoneName, $language)
+    private function addPages($directory, $parentId, $recursive, $menuName, $language)
     {
 
 
@@ -348,9 +347,9 @@ class Service
 
                                 $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
 
-                                $this->addZonePages($directory . "/" . $file, $pageId, $recursive, $zoneName, $language);
+                                $this->addPages($directory . "/" . $file, $pageId, $recursive, $menuName, $language);
                             }else{
-                                $this->addLogRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Zone name: ".$zoneName);
+                                $this->addLogRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Menu name: ".$menuName);
                             }
                         }
 
@@ -379,7 +378,7 @@ class Service
 
                             $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
 
-                             $this->importWidgets($fileFullPath, $pageId, $zoneName, $language);
+                             $this->importWidgets($fileFullPath, $pageId, $menuName, $language);
 
 
                         }
