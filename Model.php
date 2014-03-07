@@ -15,14 +15,11 @@ class Model
                 'label' => 'ZIP file:', //field label that will be displayed next to input field
             ));
         $form->addField($field);
-        $fileField = $field;
 
 
         $field = new \Ip\Form\Field\Submit(
             array(
-                'name' => 'submit', //html "name" attribute
-                'label' => 'submit', //field label that will be displayed next to input field
-                'defaultValue' => 'Import site widget content from file'
+                'value' => 'Import site widget content from file'
             ));
         $form->addField($field);
 
@@ -38,19 +35,33 @@ class Model
         $field = new \Ip\Form\Field\Hidden(
             array(
                 'name' => 'aa',
-                'defaultValue' => 'ImportExport.import'
+                'value' => 'ImportExport.import'
             ));
         $form->addField($field);
 
         return $form;
     }
 
+    public static function getLanguageIdByUrl($url)
+    {
+
+        $ra = ipContent()->getLanguages();
+
+        foreach ($ra as $language){
+            if ($language->getUrl() == $url){
+                 return $language->getId();
+            }
+        }
+
+        return false;
+
+    }
+
     public static function languageExists($url)
     {
 
-        $ra =  \Ip\Module\Languages\Db::getLanguageByUrl($url);
-
-        if (isset($ra['id'])){
+//        $ra =  \Ip\Module\Languages\Db::getLanguageByUrl($url);
+        if (self::getLanguageIdByUrl($url)){
             return true;
         }else{
             return false;

@@ -16,9 +16,9 @@ class AdminController extends \Ip\Controller
             'form' => $form
         );
 
-        $view = \Ip\View::create('view/index.php', $data);
+        $view = ipView('view/index.php', $data);
 
-        ipAddJavascript(ipFileUrl('Plugin/ImportExport/assets/importExport.js'));
+        ipAddJs(ipFileUrl('Plugin/ImportExport/assets/importExport.js'));
 
         return $view->render();
     }
@@ -33,10 +33,7 @@ class AdminController extends \Ip\Controller
         $service = New Service();
 
 
-
-
         foreach ($files as $file){
-
             $service->startImport($file);
         }
 

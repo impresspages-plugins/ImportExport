@@ -1,7 +1,6 @@
 <?php
 namespace Plugin\ImportExport;
 
-use Ip\Module\Languages\Db;
 
 class Service
 {
@@ -13,63 +12,45 @@ class Service
     public function startImport($uploadedFile)
     {
 
+
         $this->addLogRecord('Starting importing the site. '.$uploadedFile->getOriginalFileName(), 'info');
 
         $extractedDirName = $this->extractZip($uploadedFile);
         $this->importSiteTree($extractedDirName);
 
-
-        $zones = ipContent()->getZones();
-
         $parentId = 0;
         $recursive = true;
+
+        foreach ($this->languagesForImporting as $language) { // TODO X fix languages
+
+        }
+
+        $languageCode = $language->getCode(); // TODO X fix languages
 
         try {
 
             foreach ($this->zonesForImporting as $zone) {
 
                 $zoneName = $zone['nameForImporting'];
-
                 $this->addLogRecord('ZONE NAME: ' . $zoneName, 'info');
-
-                $zoneObj = ipContent()->getZone($zoneName);
-
-                $zoneId = $zoneObj->getId();
-
                 $recursive = true;
+                $this->addLogRecord('Processing language: ' . $language->getCode(), 'info');
+                $menu = \Ip\Internal\Pages\Service::getMenu($languageCode, $zoneName);
+                $parentSubPageId = $menu['id'];
 
-                $languages = \Ip\Module\Pages\Db::getLanguages();
+                $pageData = array('languageCode' =>  $language->getCode());
 
+                $directory = ipFile(
+                    'file/secure/tmp/' . $extractedDirName .'/archive/'. $language->getUrl() . '_' . $zone['nameInFile']
+                );
 
+                if (is_dir($directory)) {
 
-                foreach ($this->languagesForImporting as $language) {
+                    $this->addLogRecord("Processing:" . $directory);
 
-//                    $this->addLogRecord('Processing language: ' . $language['url'], 'info');
-
-
-                    $language_id = $language['id'];
-
-
-
-                    $directory = ipFile(
-                        'file/secure/tmp/' . $extractedDirName .'/archive/'. $language['url'] . '_' . $zone['nameInFile']
-                    );
-
-
-
-                    if (is_dir($directory)) {
-
-//                        $this->addLogRecord("Processing:" . $directory);
-
-                        $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zoneId, $language_id);
-
-
-                        $this->addZonePages($directory, $parentPageId, $recursive, $zoneName, $language);
-
-                    }
+                    $this->addZonePages($directory, $parentSubPageId, $recursive, $zoneName, $language);
 
                 }
-
             }
 
 
@@ -94,10 +75,9 @@ class Service
 
         $this->addLogRecord('Importing version '.$version, 'info');
 
-        $this->importZones($siteData['zones']);
-
-
         $this->importLanguages($siteData['languages']);
+
+        $this->importZones($siteData['zones']);
 
         return true;
     }
@@ -108,10 +88,10 @@ class Service
 
             $curZoneName = $zone['name'];
             $prefix = 'imported_';
-            $suffix = '';
-            while (ipContent()->getZone($prefix . $curZoneName . $suffix)) {
-                $suffix = $suffix + 1;
-            }
+            $suffix = ''; // TODO Add a prefix if page with specific name already exists
+//            while (ipContent()->getZone($prefix . $curZoneName . $suffix)) {
+//                $suffix = $suffix + 1;
+//            }
 
             $zoneName = $prefix . $zone['name'] . $suffix;
             $zoneTitle = $zone['title'];
@@ -131,15 +111,20 @@ class Service
             );
 
             try {
-                \Ip\Module\Pages\Service::addZone(
-                    $zoneTitle,
-                    $zoneName,
-                    $associatedModule,
-                    $defaultLayout,
-                    null,
-                    $zoneDescription,
-                    $zoneUrl
-                );
+//                \Ip\Module\Pages\Service::addZone(
+//                        $zoneTitle,
+//                        $zoneName,
+//                        $associatedModule,
+//                        $defaultLayout,
+//                        null,
+//                        $zoneDescription,
+//                    $zoneUrl
+
+                $menuExists = \Ip\Internal\Pages\Service::getMenu('en', $zoneName);
+                if (!isset($menuExists['isDeleted']) || ($menuExists['isDeleted'] == '0')){
+                    \Ip\Internal\Pages\Service::createMenu('en', $zoneName, $zoneName);
+                }
+
             } catch (\Exception $e) {
                 throw new \Exception($e);
             }
@@ -157,13 +142,18 @@ class Service
         foreach ($languageList as $language){
             if (!Model::languageExists($language['url'])){
 
-                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
+                $languageId = ipContent()->addLanguage($language['d_long'], $language['d_short'], $language['code'], $language['url'], true);
 
+//                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
+
+            }else{
+                $languageId = Model::getLanguageIdByUrl($language['url']);
             }
             //TODO
 
 
-            $this->languagesForImporting[] = \Ip\Module\Pages\LanguageModel::getLanguageByUrl($language['url']);
+
+            $this->languagesForImporting[] = ipContent()->getLanguage($languageId);;
         }
 
         return true;
@@ -209,32 +199,16 @@ class Service
     private function importWidgets($fileName, $pageId, $zoneName, $language)
     {
 
-        $language_id = $language['id'];
-        $languageDir = $language['url'];
+        $pageRevision = \Ip\Internal\Revision::getLastRevision($pageId);
+        $revisionId = $pageRevision['revisionId'];
 
+        $languageId = $language->getId();
+        $languageDir = $language->getUrl();
 
+        $this->addLogRecord('Importing widgets from '.$fileName, 'info');
 
-//        $this->addLogRecord('Importing widgets from '.$fileName, 'info');
-
-        $zone = ipContent()->getZone($zoneName);
-
-        $parentPageId = \Ip\Module\Pages\Db::rootContentElement($zone->getId(), $language_id);
-
-
-        if ($parentPageId === false) {
-            trigger_error("Can't find root zone element.");
-
-            return false;
-        }
-
-        $parentPage = $zone->getPage($parentPageId);
-
-
-        //TODO get page data from JSON
         $buttonTitle = basename($fileName, ".json");
         $url = $buttonTitle;
-
-        $revisionId = \Ip\Revision::createRevision($zoneName, $pageId, true);
 
         $string = file_get_contents($fileName);
 
@@ -269,28 +243,28 @@ class Service
                     }
 
                     switch ($widgetName) {
-                        case 'IpSeparator':
+                        case 'Separator':
                             $content = null;
                             $processWidget = true;
                             break;
-                        case 'IpTable':
+                        case 'Table':
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
-                        case 'IpText':
+                        case 'Text':
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
-                        case 'IpTextImage': //  IpTextImage as IpText
+                        case 'TextImage': //  IpTextImage as IpText
                             $widgetName = 'IpText';
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
-                        case 'IpTitle':
+                        case 'Title':
                             $content['title'] = $widgetData['title'];
                             $processWidget = true;
                             break;
-                        case 'IpHtml':
+                        case 'Html':
                             $content['html'] = $widgetData['html'];
                             if (!isset($widgetValue['layout'])) {
                                 $layout = 'escape'; // default layout for code examples
@@ -305,17 +279,27 @@ class Service
 
                     if ($processWidget) {
                         $position++;
-                        $instanceId = \Ip\Module\Content\Service::addWidget(
-                            $widgetName,
-                            $zoneName,
-                            $pageId,
-                            $blockId,
-                            $revisionId,
-                            $position
-                        );
 
-                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
+                        $widgetId = \Ip\Internal\Content\Service::createWidget($widgetName, $widgetData);
+                        \Ip\Internal\Content\Service::addWidgetInstance($widgetId, $revisionId, 0, $blockId, $position);
 
+//                        $instanceId = \Ip\Internal\Content\Service::addWidget(
+//                            $widgetName,
+//                            $zoneName,
+//                            $pageId,
+//                            $blockId,
+//                            $revisionId,
+//                            $position
+//                        );
+//
+
+
+
+                        // \Ip\Internal\Revision::getLastRevision($pageId)
+                        // createWidget
+                        // addWidgetInstance($widgetId, $revisionId, $languageId, $block, $position, $visible = true)
+//                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
+                        $this->addLogRecord('Widget ' . $widgetName . " added. File name: ".$fileName.", Menu name: ".$zoneName. ", Language: ".$languageDir, 'danger');
                     } else {
                         $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
                     }
@@ -352,13 +336,18 @@ class Service
                                 $pageTitle = $pageSettings['page_title'];
                                 $url = $pageSettings['url'];
 
-                                $pageId = \Ip\Module\Content\Service::addPage(
-                                    $zoneName,
-                                    $parentId,
-                                    $buttonTitle,
-                                    $pageTitle,
-                                    $url
-                                );
+//                                $pageId = \Ip\Module\Content\Service::addPage(
+//                                    $zoneName,
+//                                    $parentId,
+//                                    $buttonTitle,
+//                                    $pageTitle,
+//                                    $url
+//                                );
+                                $pageData = array('languageCode' =>  $language->getCode());
+
+
+                                $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
+
                                 $this->addZonePages($directory . "/" . $file, $pageId, $recursive, $zoneName, $language);
                             }else{
                                 $this->addLogRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Zone name: ".$zoneName);
@@ -377,15 +366,20 @@ class Service
                             $url = $pageSettings['url'];
 
 
-                            $pageId = \Ip\Module\Content\Service::addPage(
-                                $zoneName,
-                                $parentId,
-                                $buttonTitle,
-                                $pageTitle,
-                                $url
-                            );
+//                            $pageId = \Ip\Module\Content\Service::addPage(
+//                                $zoneName,
+//                                $parentId,
+//                                $buttonTitle,
+//                                $pageTitle,
+//                                $url
+//                            );
 
-                            $this->importWidgets($fileFullPath, $pageId, $zoneName, $language);
+                            $pageData = array('languageCode' =>  $language->getCode(),
+                                                'urlCode' =>  $language->getUrl());
+
+                            $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
+
+                             $this->importWidgets($fileFullPath, $pageId, $zoneName, $language);
 
 
                         }

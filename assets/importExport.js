@@ -1,20 +1,24 @@
 var ipExportImport = new function () {
     "use strict";
 
+    var $this = $(this);
+
 
     this.init = function () {
-        $('form').validator(validatorConfig);
+//        $('form').validator(validatorConfig);
+
+
         $('form').submit(function (e) {
             var form = $(this);
 
             // client-side validation OK.
             if (!e.isDefaultPrevented()) {
 
-                $('.ipsLoading').removeClass('ipgHide');
-                $('.ipsImportForm').addClass('ipgHide');
+                $('.ipsLoading').removeClass('hidden');
+                $('.ipsImportForm').addClass('hidden');
 
                 $.ajax({
-                    url: ip.baseUrl, //we assume that for already has m, g, a parameters which will lead this request to required controller
+                    url: ip.baseUrl,
                     dataType: 'json',
                     type: 'POST',
                     data: form.serialize(),
@@ -33,7 +37,7 @@ var ipExportImport = new function () {
             //form has been successfully submitted.
 
 
-            $('.ipsLoading').addClass('ipgHide');
+            $('.ipsLoading').addClass('hidden');
 
             var toClone = $('.ipsLogRecord').first();
 
@@ -66,8 +70,8 @@ var ipExportImport = new function () {
 
             $('.ipsLogRecord').first().remove();
 
-            $('.ipsLog').removeClass('ipgHide');
-            $('.ipsLogRecord').removeClass('ipgHide');
+            $('.ipsLog').removeClass('hidden');
+            $('.ipsLogRecord').removeClass('hidden');
 
         } else {
             //PHP controller says there are some errors
