@@ -11,8 +11,8 @@ class AdminController extends \Ip\Controller
     {
         global $site;
 
-        $formImport = Model::getFormImport();
-        $formExport = Model::getFormExport();
+        $formImport = ModelImport::getFormImport();
+        $formExport = ModelExport::getFormExport();
 
         $data = array (
             'formImport' => $formImport,
@@ -28,7 +28,7 @@ class AdminController extends \Ip\Controller
 
     public function import()
     {
-        $form = Model::getFormImport();
+        $form = ModelImport::getFormImport();
 
         $fileField = $form->getField('siteFile');
         $files = $fileField->getFiles($_POST, $fileField->getName());
@@ -50,5 +50,19 @@ class AdminController extends \Ip\Controller
 
     public function export(){
         print "TEST: Data export will be here"; //TODO Add exporting
+
+//        $form = ModelExport::getFormExport();
+
+//        $fileField = $form->getField('siteFile');
+//        $files = $fileField->getFiles($_POST, $fileField->getName());
+//
+        $service = New Service();
+        $service->startExport();
+//
+
+//        $response['log'] =   $service->getExportLog();
+        $response['status'] =   'success';
+
+//        return $this->returnJson($response);
     }
 }

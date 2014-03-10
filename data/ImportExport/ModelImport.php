@@ -1,7 +1,7 @@
 <?php
 namespace Modules\data\ImportExport;
 
-class Model
+class ModelImport
 {
 
     public static function getFormImport()
@@ -61,54 +61,7 @@ class Model
         return $form;
     }
 
-    public static function getFormExport()
-    {
 
-        $form = new  \Modules\developer\form\Form();
-
-        $form->setAction(BASE_URL);
-
-        $field = new \Modules\developer\form\Field\Submit(
-            array(
-                'name' => 'submitExport', //html "name" attribute
-                'label' => 'submitExport', //field label that will be displayed next to input field
-                'defaultValue' => 'Export site to ZIP'
-            ));
-
-        $form->addField($field);
-
-        $field = new \Modules\developer\form\Field\Hidden(
-            array(
-                'name' => 'action',
-                'defaultValue' => 'export'
-            )
-        );
-
-        $form->addField($field);
-
-        $field = new \Modules\developer\form\Field\Hidden(
-            array(
-                'name' => 'aa',
-                'defaultValue' => 'export'
-            ));
-        $form->addField($field);
-
-        $field = new \Modules\developer\form\Field\Hidden(
-            array(
-                'name' => 'g',
-                'defaultValue' => 'data'
-            ));
-        $form->addField($field);
-
-        $field = new \Modules\developer\form\Field\Hidden(
-            array(
-                'name' => 'm',
-                'defaultValue' => 'ImportExport'
-            ));
-        $form->addField($field);
-
-        return $form;
-    }
 
     public static function languageExists($url)
     {
@@ -461,4 +414,5 @@ class Model
         return $moduleName3x;
 
     }
+
 }

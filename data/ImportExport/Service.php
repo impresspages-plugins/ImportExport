@@ -34,7 +34,7 @@ class Service
 
                 $this->addLogRecord('ZONE NAME: ' . $zoneName, 'info');
 
-                $zoneId = Model::getZoneIdByName($zoneName);
+                $zoneId = ModelImport::getZoneIdByName($zoneName);
 
                 $recursive = true;
 
@@ -125,7 +125,7 @@ class Service
             );
 
             try {
-                $zoneId = Model::addZone(
+                $zoneId = ModelImport::addZone(
                     $zoneTitle,
                     $zoneName,
                     $associatedModule,
@@ -158,7 +158,7 @@ class Service
 
 
         foreach ($languageList as $language){
-            if (!Model::languageExists($language['url'])){
+            if (!ModelImport::languageExists($language['url'])){
 
                 self::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
 
@@ -166,7 +166,7 @@ class Service
             //TODO
 
 
-            $this->languagesForImporting[] = Model::getLanguageByUrl($language['url']);
+            $this->languagesForImporting[] = ModelImport::getLanguageByUrl($language['url']);
         }
 
         return true;
@@ -223,7 +223,7 @@ class Service
 
         $zone = $site->getZone($zoneName);
 
-        $parentPageId = \Modules\standard\menu_management\Db::rootContentElement(Model::getZoneIdByName($zoneName), $language_id);
+        $parentPageId = \Modules\standard\menu_management\Db::rootContentElement(ModelImport::getZoneIdByName($zoneName), $language_id);
 
         if ($parentPageId === false) {
             trigger_error("Can't find root zone element.");
@@ -304,7 +304,7 @@ class Service
 
                     if ($processWidget) {
                         $position++;
-                        $instanceId = Model::addWidget(
+                        $instanceId = ModelImport::addWidget(
                             $widgetName,
                             $zoneName,
                             $pageId,
@@ -313,7 +313,7 @@ class Service
                             $position
                         );
 
-                       Model::addWidgetContent($instanceId, $content, $layout);
+                       ModelImport::addWidgetContent($instanceId, $content, $layout);
 
                     } else {
                         $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
@@ -356,7 +356,7 @@ class Service
                                 $visible = $pageSettings['visible'];
 
 
-                                $pageId = Model::addPage(
+                                $pageId = ModelImport::addPage(
                                     $zoneName,
                                     $parentId,
                                     $buttonTitle,
@@ -385,7 +385,7 @@ class Service
                             $url = $pageSettings['url'];
                             $visible = $pageSettings['visible'];
 
-                            $pageId = Model::addPage(
+                            $pageId = ModelImport::addPage(
                                 $zoneName,
                                 $parentId,
                                 $buttonTitle,
@@ -452,6 +452,15 @@ class Service
         }else{
             trigger_error("Can't create language. Missing URL or language code.");
         }
+    }
+
+    public function startExport(){
+
+        $response = "success";
+
+        ManagerExport::exportSiteTree();
+
+        return $response;
     }
 
 }
