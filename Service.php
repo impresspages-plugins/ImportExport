@@ -203,11 +203,14 @@ class Service
         $buttonTitle = basename($fileName, ".json");
         $url = $buttonTitle;
 
+
         $string = file_get_contents($fileName);
 
         $position = 0;
 
         $pageData = json_decode($string, true);
+
+
 
         if (isset($pageData['widgets'])) {
 
@@ -215,7 +218,7 @@ class Service
 
             foreach ($widgetList as $widgetKey => $widgetValue) {
 
-                $blockId = 'main';
+                $blockId = 'main'; // TODO X Allow to import all blocks, not only main
 
                 if (isset($widgetValue['type'])) {
                     $widgetName = $widgetValue['type'];
@@ -262,7 +265,6 @@ class Service
                             if (!isset($widgetValue['layout'])) {
                                 $layout = 'escape'; // default layout for code examples
                             }
-
                             $processWidget = true;
                             break;
                         default:
@@ -304,11 +306,8 @@ class Service
         }
     }
 
-
     private function addPages($directory, $parentId, $recursive, $menuName, $language)
     {
-
-
 
         $array_items = array();
 
@@ -336,10 +335,13 @@ class Service
 //                                    $pageTitle,
 //                                    $url
 //                                );
-                                $pageData = array('languageCode' =>  $language->getCode());
+                                $pageData = array('languageCode' =>  $language->getCode(),
+                                                'urlPath' => esc($url),
+                                                'metaTitle' => esc($pageTitle),
+                                );
 
+                                $pageId = ipContent()->addPage($parentId, $buttonTitle, $pageData);
 
-                                $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
 
                                 $this->addPages($directory . "/" . $file, $pageId, $recursive, $menuName, $language);
                             }else{
@@ -368,11 +370,12 @@ class Service
 //                            );
 
                             $pageData = array('languageCode' =>  $language->getCode(),
-                                                'urlCode' =>  $language->getUrl());
+                                                'urlPath' =>  esc($url),
+                                                'metaTitle' => esc($pageTitle),
+                            );
 
-                            $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
-
-                             $this->importWidgets($fileFullPath, $pageId, $menuName, $language);
+                            $pageId = ipContent()->addPage($parentId, $buttonTitle, $pageData);
+                            $this->importWidgets($fileFullPath, $pageId, $menuName, $language);
 
 
                         }
