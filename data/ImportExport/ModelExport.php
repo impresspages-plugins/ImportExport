@@ -156,12 +156,17 @@ class ModelExport {
                 $processWidget = true;
                 break;
             case 'IpTable':
-                $widgetName = 'Table';
-                $content['text'] = $widgetData['text'];
+                $widgetName = 'Text';
+
+                if (isset($widgetData['text'])){
+                    $content['text'] = $widgetData['text'];
+                }else{
+                    $content['text'] = '';
+                }
 
                 $elements = array ('type' => $widgetName,
                     'layout' => $widgetRecord['layout'],
-                    'data' => array('text' => $widgetData['text']));
+                    'data' => array('text' => $content['text']));
 
                 $processWidget = true;
                 break;
@@ -186,7 +191,7 @@ class ModelExport {
                     'data' => array(
                         'imageSmall' => $widgetData['text'],
                         'title' => $widgetData['title'],
-                        'text' => $widgetData['text']
+                        'text' => $content['text']
                     ));
 
                 $processWidget = true;
@@ -194,12 +199,16 @@ class ModelExport {
 
             case 'IpTitle':
                 $widgetName = 'Title';
-                $content['title'] = $widgetData['title'];
+                if (isset($widgetData['title'])) {
+                    $content['title'] = $widgetData['title'];
+                }else{
+                    $content['title'] = '';
+                }
 
                 $elements = array ('type' => $widgetName,
                     'layout' => $widgetRecord['layout'],
                     'data' => array(
-                        'title' => $widgetData['title']
+                        'title' => $content['title']
                     ));
 
                 $processWidget = true;
@@ -215,23 +224,23 @@ class ModelExport {
                 $elements = array ('type' => $widgetName,
                     'layout' => $widgetRecord['layout'],
                     'data' => array(
-                        'html' => $widgetData['html'],
+                        'html' => $content['html'],
                     ));
 
                 $processWidget = true;
                 break;
 
-            case 'IpFileDoc':
+            case 'ipFiledoc':
                 $widgetName = 'FileDoc';
 
                 $elements = array ('type' => $widgetName,
                     'layout' => $widgetRecord['layout'],
                     'data' => array(
-                        'manualPages' => $widgetData['manualPages'],
+                        'pageFile' => $widgetData['pageFile'],
                     ));
 
                 $processWidget = true;
-                die();
+
                 break;
 
             case 'ipCodeHighlight':

@@ -7,6 +7,8 @@
 namespace Modules\data\ImportExport;
 
 
+use IpUpdate\Library\Model\Exception;
+
 class ManagerExport {
 
     const PLUGIN_TEMP_DIR = 'tmp/data/export/',
@@ -37,16 +39,18 @@ class ManagerExport {
 
                     $zoneName = $zone->getName();
 
-
-                    self::getPages(
-                        $zone,
-                        $language_id,
-                        1000,
-                        null,
-                        1,
-                        self::getTempDir() . self::ARCHIVE_DIR . $language_url . "_" . $zoneName
-                    );
-
+                    try{
+                        self::getPages(
+                            $zone,
+                            $language_id,
+                            1000,
+                            null,
+                            1,
+                            self::getTempDir() . self::ARCHIVE_DIR . $language_url . "_" . $zoneName
+                        );
+                    }catch (Exception $e){
+                        print "ERROR. Error while exporting site tree ".$e;
+                    }
 
 
 
@@ -120,7 +124,6 @@ class ManagerExport {
                 if ($element->getType() == 'default') {
                     $pages[] = $element;
                 }
-
                 $dirName = $element->getUrl();
 
                 $pages = array_merge(
@@ -131,7 +134,7 @@ class ManagerExport {
                         $maxDepth,
                         $element->getId(),
                         $curDepth + 1,
-                        $path . "/" . $dirName
+                        $path . "/" . str_pad($key, 4, '0', STR_PAD_LEFT).'_'.$dirName
                     )
                 );
 
@@ -143,7 +146,6 @@ class ManagerExport {
                     $content = Array();
                     $content['settings'] = self::getPageSettings($element->getId());
                     $content['settings']['position'] = $key;
-
                     $widgetData  = $model->getElements($zone->getName(), $element->getId());
 
                     if (!is_null($widgetData)){
@@ -154,6 +156,7 @@ class ManagerExport {
                     print "Export error in " . $path . "/" . $dirName . " - " . $e->getMessage();
                     print '<br>';
                 }
+
 
                 if (isset($content)) {
                     self::savePages($content, $path, str_pad($key, 4, '0', STR_PAD_LEFT).'_'.$dirName);
@@ -190,7 +193,6 @@ class ManagerExport {
     {
         $path = preg_replace('/[^\/a-zA-Z0-9_-]$/s', '', $path);
         $saveFileName = preg_replace('/[^a-zA-Z0-9_-]$/s', '', $saveFileName);
-        print 'doing';
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
         }
