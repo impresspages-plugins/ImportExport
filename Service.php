@@ -13,7 +13,7 @@ class Service
     {
 
 
-        $this->addLogRecord('Starting importing the site. '.$uploadedFile->getOriginalFileName(), 'info');
+        $this->addLogRecord('Starting importing the site. ' . $uploadedFile->getOriginalFileName(), 'info');
 
         $extractedDirName = $this->extractZip($uploadedFile);
         $this->importSiteTree($extractedDirName);
@@ -38,10 +38,10 @@ class Service
                 $menu = \Ip\Internal\Pages\Service::getMenu($languageCode, $menuName);
                 $parentSubPageId = $menu['id'];
 
-                $pageData = array('languageCode' =>  $language->getCode());
+                $pageData = array('languageCode' => $language->getCode());
 
                 $directory = ipFile(
-                    'file/secure/tmp/' . $extractedDirName .'/archive/'. $language->getUrl() . '_' . $menuItem['nameInFile']
+                    'file/secure/tmp/' . $extractedDirName . '/archive/' . $language->getUrl() . '_' . $menuItem['nameInFile']
                 );
 
                 if (is_dir($directory)) {
@@ -73,7 +73,7 @@ class Service
 
         $version = $siteData['version'];
 
-        $this->addLogRecord('Importing version '.$version, 'info');
+        $this->addLogRecord('Importing version ' . $version, 'info');
 
         $this->importLanguages($siteData['languages']);
 
@@ -82,7 +82,8 @@ class Service
         return true;
     }
 
-    private function importMenus($menuList){
+    private function importMenus($menuList)
+    {
 
         foreach ($menuList as $menu) {
 
@@ -112,10 +113,10 @@ class Service
             try {
 
                 $menuExists = \Ip\Internal\Pages\Service::getMenu('en', $menuName);
-                if (!isset($menuExists['isDeleted']) || ($menuExists['isDeleted'] == '1')){
+                if (!isset($menuExists['isDeleted']) || ($menuExists['isDeleted'] == '1')) {
                     \Ip\Internal\Pages\Service::createMenu('en', $menuName, $menuTitle);
-                }else{
-                    $this->addLogRecord('Menu '.$menuName.' already exists. Importing anyway.', 'error');
+                } else {
+                    $this->addLogRecord('Menu ' . $menuName . ' already exists. Importing anyway.', 'error');
                 }
 
             } catch (\Exception $e) {
@@ -132,18 +133,17 @@ class Service
     private function importLanguages($languageList)
     {
 
-        foreach ($languageList as $language){
-            if (!Model::languageExists($language['url'])){
+        foreach ($languageList as $language) {
+            if (!Model::languageExists($language['url'])) {
 
                 $languageId = ipContent()->addLanguage($language['d_long'], $language['d_short'], $language['code'], $language['url'], true);
 
 //                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
 
-            }else{
+            } else {
                 $languageId = Model::getLanguageIdByUrl($language['url']);
             }
             //TODO
-
 
 
             $this->languagesForImporting[] = ipContent()->getLanguage($languageId);;
@@ -198,7 +198,7 @@ class Service
         $languageId = $language->getId();
         $languageDir = $language->getUrl();
 
-        $this->addLogRecord('Importing widgets from '.$fileName, 'info');
+        // $this->addLogRecord('Importing widgets from '.$fileName, 'info');
 
         $buttonTitle = basename($fileName, ".json");
         $url = $buttonTitle;
@@ -209,7 +209,6 @@ class Service
         $position = 0;
 
         $pageData = json_decode($string, true);
-
 
 
         if (isset($pageData['widgets'])) {
@@ -226,13 +225,13 @@ class Service
                     //TODO Testing
                     $processWidget = false;
 
-                    if (isset($widgetValue['layout'])){
-                        $layout =  $widgetValue['layout'];
-                    }else{
-                        $layout =  'default';
+                    if (isset($widgetValue['layout'])) {
+                        $layout = $widgetValue['layout'];
+                    } else {
+                        $layout = 'default';
                     }
 
-                    if (isset($widgetValue['data'])){
+                    if (isset($widgetValue['data'])) {
 
                         $widgetData = $widgetValue['data'];
 
@@ -267,6 +266,17 @@ class Service
                             }
                             $processWidget = true;
                             break;
+
+                        case 'FileDoc':
+                            $content = $widgetData;
+                            $processWidget = true;
+                            break;
+
+                        case 'CodeHighlight':
+                            $content = $widgetData;
+                            $processWidget = true;
+                            break;
+
                         default:
                             $content = null;
                             break;
@@ -289,14 +299,13 @@ class Service
 //
 
 
-
                         // \Ip\Internal\Revision::getLastRevision($pageId)
                         // createWidget
                         // addWidgetInstance($widgetId, $revisionId, $languageId, $block, $position, $visible = true)
 //                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
-                        $this->addLogRecord('Widget ' . $widgetName . " added. File name: ".$fileName.", Menu name: ".$menuName. ", Language: ".$languageDir, 'danger');
+//                        $this->addLogRecord('Widget ' . $widgetName . " added. File name: ".$fileName.", Menu name: ".$menuName. ", Language: ".$languageDir, 'danger');
                     } else {
-                        $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$menuName. ", Language: ".$languageDir, 'danger');
+                        $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: " . $fileName . ", Zone name: " . $menuName . ", Language: " . $languageDir, 'danger');
                     }
                 }
 
@@ -313,7 +322,17 @@ class Service
 
 
         if ($handle = opendir($directory)) {
-            while (false !== ($file = readdir($handle))) {
+
+            $dirArray = array();
+
+            while ($file = readdir($handle)) {
+                $dirArray[] = $file;
+            }
+
+
+            sort($dirArray);
+
+            foreach ($dirArray as $file) {
                 if ($file != "." && $file != "..") {
                     if (is_dir($directory . "/" . $file)) {
 
@@ -328,24 +347,17 @@ class Service
                                 $pageTitle = $pageSettings['page_title'];
                                 $url = $pageSettings['url'];
 
-//                                $pageId = \Ip\Module\Content\Service::addPage(
-//                                    $zoneName,
-//                                    $parentId,
-//                                    $buttonTitle,
-//                                    $pageTitle,
-//                                    $url
-//                                );
-                                $pageData = array('languageCode' =>  $language->getCode(),
-                                                'urlPath' => esc($url),
-                                                'metaTitle' => esc($pageTitle),
+                                $pageData = array('languageCode' => $language->getCode(),
+                                    'urlPath' => esc($url),
+                                    'metaTitle' => esc($pageTitle),
                                 );
 
                                 $pageId = ipContent()->addPage($parentId, $buttonTitle, $pageData);
 
 
                                 $this->addPages($directory . "/" . $file, $pageId, $recursive, $menuName, $language);
-                            }else{
-                                $this->addLogRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Menu name: ".$menuName);
+                            } else {
+                                $this->addLogRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Menu name: " . $menuName);
                             }
                         }
 
@@ -369,9 +381,9 @@ class Service
 //                                $url
 //                            );
 
-                            $pageData = array('languageCode' =>  $language->getCode(),
-                                                'urlPath' =>  esc($url),
-                                                'metaTitle' => esc($pageTitle),
+                            $pageData = array('languageCode' => $language->getCode(),
+                                'urlPath' => esc($url),
+                                'metaTitle' => esc($pageTitle),
                             );
 
                             $pageId = ipContent()->addPage($parentId, $buttonTitle, $pageData);
