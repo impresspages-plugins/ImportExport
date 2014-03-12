@@ -2,6 +2,6 @@
     "title": "Import data",
     "version": "1.00",
     "name": "ImportExport",
-    "description": "My first plugin on ImpressPages",
+    "description": "Export and import data on ImpressPages",
     "author": "ImpressPages"
 }
