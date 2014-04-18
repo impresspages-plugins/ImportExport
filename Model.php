@@ -50,7 +50,7 @@ class Model
         $ra = ipContent()->getLanguages();
 
         foreach ($ra as $language){
-            if ($language->getUrl() == $url){
+            if ($language->getUrlPath() == $url){
                  return $language->getId();
             }
         }

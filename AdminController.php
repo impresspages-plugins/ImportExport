@@ -18,7 +18,7 @@ class AdminController extends \Ip\Controller
 
         $view = ipView('view/index.php', $data);
 
-        ipAddJs(ipFileUrl('Plugin/ImportExport/assets/importExport.js'));
+        ipAddJs('assets/importExport.js');
 
         return $view->render();
     }

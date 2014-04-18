@@ -1,7 +1,7 @@
 (function($){
+    "use strict";
 
     var ipExportImport = new function () {
-        "use strict";
 
         var $this = $(this);
 
@@ -20,6 +20,7 @@
         }
 
         var processResponse = function (event, response) {
+
             if (response.status && response.status == 'success') {
                 //form has been successfully submitted.
 
@@ -81,4 +82,4 @@
         ipExportImport.init();
     });
 
-})(ip.jQuery);
+})(jQuery);

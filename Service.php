@@ -13,7 +13,7 @@ class Service
     {
 
 
-        $this->addLogRecord('Starting importing the site. ' . $uploadedFile->getOriginalFileName(), 'info');
+        $this->addLogRecord('Starting importing the site. ' . basename($uploadedFile), 'info');
 
         $extractedDirName = $this->extractZip($uploadedFile);
         $this->importSiteTree($extractedDirName);
@@ -41,7 +41,7 @@ class Service
                 $pageData = array('languageCode' => $language->getCode());
 
                 $directory = ipFile(
-                    'file/secure/tmp/' . $extractedDirName . '/archive/' . $language->getUrl() . '_' . $menuItem['nameInFile']
+                    'file/secure/tmp/' . $extractedDirName . '/archive/' . $language->getCode() . '_' . $menuItem['nameInFile']
                 );
 
                 if (is_dir($directory)) {
@@ -134,14 +134,17 @@ class Service
     {
 
         foreach ($languageList as $language) {
-            if (!Model::languageExists($language['url'])) {
+
+            if (!ipContent()->getLanguageByCode($language['code'])) {
 
                 $languageId = ipContent()->addLanguage($language['d_long'], $language['d_short'], $language['code'], $language['url'], true);
 
 //                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
 
             } else {
-                $languageId = Model::getLanguageIdByUrl($language['url']);
+                $languageId =  ipContent()->getLanguageByCode($language['code'])->getId();
+
+//                $languageId = Model::getLanguageIdByUrl($language['url']);
             }
             //TODO
 
@@ -156,7 +159,7 @@ class Service
     {
         $extractSubDir = false;
 
-        $fileName = $file->getOriginalFileName();
+        $fileName = basename($file);
 
         try {
             $zipLib = ipFile('Plugin/ImportExport/lib/pclzip.lib.php');
@@ -196,7 +199,7 @@ class Service
         $revisionId = $pageRevision['revisionId'];
 
         $languageId = $language->getId();
-        $languageDir = $language->getUrl();
+        $languageDir = $language->getUrlPath();
 
         // $this->addLogRecord('Importing widgets from '.$fileName, 'info');
 
@@ -232,13 +235,13 @@ class Service
                     }
 
                     if (isset($widgetValue['data'])) {
-
                         $widgetData = $widgetValue['data'];
-
+                    }else{
+                        $widgetData = null;
                     }
 
                     switch ($widgetName) {
-                        case 'Separator':
+                        case 'Divider':
                             $content = null;
                             $processWidget = true;
                             break;
@@ -246,12 +249,35 @@ class Service
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
+                        case 'Image':
+                            if (isset($widgetData['imageOriginal'])){
+                                $content['imageOriginal'] = $widgetData['imageOriginal'];
+                                if (isset($widgetData['cropX1'])){
+                                    $content['cropX1'] = $widgetData['cropX1'];
+                                }
+
+                                if (isset($widgetData['cropX2'])){
+                                    $content['cropX2'] = $widgetData['cropX2'];
+                                }
+
+                                if (isset($widgetData['cropY1'])){
+                                    $content['cropY1'] = $widgetData['cropY1'];
+                                }
+
+                                if (isset($widgetData['cropY2'])){
+                                    $content['cropY2'] = $widgetData['cropY2'];
+                                }
+
+                                $processWidget = true;
+                            }
+
+                            break;
                         case 'Text':
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
                         case 'TextImage': //  IpTextImage as IpText
-                            $widgetName = 'IpText';
+                            $widgetName = 'Text';
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
@@ -285,8 +311,20 @@ class Service
                     if ($processWidget) {
                         $position++;
 
-                        $widgetId = \Ip\Internal\Content\Service::createWidget($widgetName, $widgetData);
-                        \Ip\Internal\Content\Service::addWidgetInstance($widgetId, $revisionId, 0, $blockId, $position);
+                        if (isset($widgetValue['layout'])){
+                            $skin = $widgetValue['layout'];
+                        }else{
+                            $skin = 'default';
+                        }
+
+                        if (!isset($widgetData)){
+                            $widgetData = array();
+                        }
+
+                        $widgetId = \Ip\Internal\Content\Service::createWidget($widgetName, $widgetData, $skin, $revisionId, 0, $blockId, $position);
+
+
+//                        \Ip\Internal\Content\Service::addWidgetInstance($widgetId, $revisionId, 0, $blockId, $position);
 
 //                        $instanceId = \Ip\Internal\Content\Service::addWidget(
 //                            $widgetName,

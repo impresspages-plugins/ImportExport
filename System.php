@@ -11,7 +11,5 @@ class System {
 
     public function replaceResponse($response) {
 
-
-
     }
 }
