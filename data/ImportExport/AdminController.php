@@ -21,7 +21,8 @@ class AdminController extends \Ip\Controller
 
         $view = \Ip\View::create('view/index.php', $data);
 
-        $site->addJavascript(BASE_URL.PLUGIN_DIR.'data/ImportExport/public/importExport.js');
+        $site->addJavascript(BASE_URL.PLUGIN_DIR.'data/ImportExport/public/import.js');
+        $site->addJavascript(BASE_URL.PLUGIN_DIR.'data/ImportExport/public/export.js');
 
         return $view->render();
     }
@@ -42,27 +43,20 @@ class AdminController extends \Ip\Controller
         }
 
 
-        $response['log'] =   $service->getImportLog();
+        $response['log'] =   Log::getLog();
         $response['status'] =   'success';
 
         return $this->returnJson($response);
     }
 
     public function export(){
-        print "TEST: Data export will be here"; //TODO Add exporting
 
-//        $form = ModelExport::getFormExport();
-
-//        $fileField = $form->getField('siteFile');
-//        $files = $fileField->getFiles($_POST, $fileField->getName());
-//
         $service = New Service();
-        $service->startExport();
-//
+        $results = $service->startExport();
 
-//        $response['log'] =   $service->getExportLog();
         $response['status'] =   'success';
+        $response['log']  = Log::getLog();
 
-//        return $this->returnJson($response);
+       return $this->returnJson($response);
     }
 }

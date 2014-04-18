@@ -10,12 +10,15 @@ namespace Modules\data\ImportExport;
 
 
 class ModelExport {
+
     public static function getFormExport()
     {
 
         $form = new  \Modules\developer\form\Form();
 
-        $form->setAction(BASE_URL);
+        //$form->setAction(BASE_URL);
+
+        $form->addClass('ipsExportForm');
 
         $field = new \Modules\developer\form\Field\Submit(
             array(
@@ -79,8 +82,6 @@ class ModelExport {
 
         $languageList = Array();
 
-
-
         foreach ($languages as $language) {
 
             $languageRecord['code'] = $language->getCode();
@@ -130,12 +131,31 @@ class ModelExport {
         //\Modules\standard\content_management\Model::getWidgetFullRecord($instanceId);
 
         $widgetData = array();
-
         foreach ($widgetRecords as $widgetRecord) {
-            $widgetData[] = self::getWidgetExportData($widgetRecord);
+            try{
+
+                $widgetData[] = self::getWidgetExportData($widgetRecord);
+            }catch (\Exception $e){
+                Log::addRecord($e);
+            }
+
         }
 
         return $widgetData;
+    }
+
+    private static function getSelectedWidgetParams($widgetData, $paramsList){
+
+        $params = array();
+
+        foreach ($paramsList as $paramKey){
+
+            if (isset($widgetData[$paramKey])){
+                $params[$paramKey] = $widgetData[$paramKey];
+            }
+
+        }
+        return $params;
     }
 
     public static function getWidgetExportData($widgetRecord) {
@@ -145,10 +165,24 @@ class ModelExport {
         $widgetData = $widgetRecord['data'];
         $processWidget = false;
         $content = array();
-
         switch ($widgetName) {
+            case 'IpImage':
+                $widgetName = 'Image';
+
+                if (isset($widgetData['imageOriginal'])){
+                    self::copyImage($widgetData['imageOriginal']);
+                }
+
+                $elements = array ('type' => $widgetName,
+                    'layout' => $widgetRecord['layout'],
+                    'data' => self::getSelectedWidgetParams($widgetData, array('imageOriginal', 'cropX1', 'cropY1', 'cropX2', 'cropY2'))
+                );
+
+                $processWidget = true;
+
+            break;
             case 'IpSeparator':
-                $widgetName = 'Separator';
+                $widgetName = 'Divider';
                 $content = null;
 
                 $elements = array ('type' => $widgetName,
@@ -275,7 +309,8 @@ class ModelExport {
         }
 
         if (!$processWidget){
-            var_dump('ERROR: Widget '. $widgetName.' not supported');
+
+            throw new \Exception('ERROR: Widget '. $widgetName.' not supported');
         }
 
 
@@ -306,6 +341,21 @@ class ModelExport {
         return $retval;
     }
 
+    private static function copyImage($imageFileName)
+    {
+        $destination = ManagerExport::getTempDir().ManagerExport::ARCHIVE_DIR.'/'.$imageFileName;
+        $dirName = dirname($destination);
 
+        if (!is_dir($dirName)){
+            mkdir($dirName, null,true);
+        }
 
+        if (copy(BASE_DIR.$imageFileName, $destination)){
+
+            return true;
+        }else{
+            return false;
+        }
+
+    }
 } 

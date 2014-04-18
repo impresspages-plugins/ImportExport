@@ -3,6 +3,7 @@ namespace Modules\data\ImportExport;
 
 //use Ip\Module\Languages\Db;
 
+
 class Service
 {
 
@@ -15,9 +16,9 @@ class Service
 
         global $site;
 
-        $this->addLogRecord('Starting importing the site. '.$uploadedFile->getOriginalFileName(), 'info');
+        Log::addRecord('Starting importing the site. '.$uploadedFile->getOriginalFileName(), 'info');
 
-        $extractedDirName = $this->extractZip($uploadedFile);
+        $extractedDirName = Zip::extractZip($uploadedFile);
         $this->importSiteTree($extractedDirName);
 
 
@@ -32,15 +33,13 @@ class Service
 
                 $zoneName = $zone['nameForImporting'];
 
-                $this->addLogRecord('ZONE NAME: ' . $zoneName, 'info');
+                Log::addRecord('ZONE NAME: ' . $zoneName, 'info');
 
                 $zoneId = ModelImport::getZoneIdByName($zoneName);
 
                 $recursive = true;
 
                 $languages = $site->getLanguages();
-
-
 
                 foreach ($this->languagesForImporting as $language) {
 
@@ -66,10 +65,10 @@ class Service
 
 
         } catch (\Exception $e) {
-            $this->addLogRecord("Skipping:" . $e);
+            Log::addRecord("Skipping:" . $e);
         }
 
-        $this->addLogRecord('Finished importing', 'success');
+        Log::addRecord('Finished importing', 'success');
         return true;
     }
 
@@ -84,7 +83,7 @@ class Service
 
         $version = $siteData['version'];
 
-        $this->addLogRecord('Importing version '.$version, 'info');
+        Log::addRecord('Importing version '.$version, 'info');
 
         $this->importZones($siteData['zones']);
 
@@ -145,7 +144,6 @@ class Service
 
         }
 
-
         return true;
 
     }
@@ -154,8 +152,6 @@ class Service
     {
 
         global $site;
-
-
 
         foreach ($languageList as $language){
             if (!ModelImport::languageExists($language['url'])){
@@ -172,42 +168,7 @@ class Service
         return true;
     }
 
-    private function extractZip($file)
-    {
-        $extractSubDir = false;
 
-        $fileName = $file->getOriginalFileName();
-
-        try {
-            $zipLib = BASE_DIR.PLUGIN_DIR.'data/ImportExport/lib/pclzip.lib.php';
-            require_once($zipLib);
-
-            $archive = new \PclZip(BASE_DIR.'file/secure/tmp/' . $fileName);
-
-            $zipNameNoExt = basename($fileName, '.zip');
-            $extractSubDir = $zipNameNoExt;
-            $count = 0;
-            while (is_file(BASE_DIR.'file/secure/tmp/' . $extractSubDir) || is_dir(
-                    BASE_DIR.'file/secure/tmp/' . $extractSubDir
-                )) {
-                $count++;
-                $extractSubDir = $zipNameNoExt . '_' . $count;
-            }
-
-            if ($archive->extract(
-                    PCLZIP_OPT_PATH,
-                    BASE_DIR.'file/secure/tmp',
-                    PCLZIP_OPT_ADD_PATH,
-                    $extractSubDir
-                ) == 0
-            ) {
-                die("Error : " . $archive->errorInfo(true));
-            }
-        } catch (\Exception $e) {
-            $this->addLogRecord($e);
-        }
-        return $extractSubDir;
-    }
 
     private function importWidgets($fileName, $pageId, $zoneName, $language)
     {
@@ -216,8 +177,6 @@ class Service
 
         $language_id = $language['id'];
         $languageDir = $language['url'];
-
-
 
 //        $this->addLogRecord('Importing widgets from '.$fileName, 'info');
 
@@ -268,7 +227,7 @@ class Service
 
                     }
                     switch ($widgetName) {
-                        case 'IpSeparator':
+                        case 'Divider':
                             $content = null;
                             $processWidget = true;
                             break;
@@ -276,7 +235,7 @@ class Service
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
-                        case 'IpText':
+                        case 'Text':
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
@@ -285,11 +244,11 @@ class Service
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
-                        case 'IpTitle':
+                        case 'Title':
                             $content['title'] = $widgetData['title'];
                             $processWidget = true;
                             break;
-                        case 'IpHtml':
+                        case 'Html':
                             $content['html'] = $widgetData['html'];
                             if (!isset($widgetValue['layout'])) {
                                 $layout = 'escape'; // default layout for code examples
@@ -316,7 +275,7 @@ class Service
                        ModelImport::addWidgetContent($instanceId, $content, $layout);
 
                     } else {
-                        $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
+                        Log::addRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
                     }
                 }
 
@@ -330,10 +289,7 @@ class Service
     private function addZonePages($directory, $parentId, $recursive, $zoneName, $language)
     {
 
-
-
         $array_items = array();
-
 
         if ($handle = opendir($directory)) {
             while (false !== ($file = readdir($handle))) {
@@ -345,7 +301,6 @@ class Service
                             if (is_file($pageFileNamePath)) {
                                 $string = file_get_contents($pageFileNamePath);
                                 $pageData = json_decode($string, true);
-
 
                                 $pageSettings = $pageData['settings'];
 
@@ -367,7 +322,7 @@ class Service
                                 );
                                 $this->addZonePages($directory . "/" . $file, $pageId, $recursive, $zoneName, $language);
                             }else{
-                                $this->addLogRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Zone name: ".$zoneName);
+                                Log::addRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Zone name: ".$zoneName);
                             }
                         }
 
@@ -406,16 +361,6 @@ class Service
         return $array_items;
     }
 
-    private function addLogRecord($msg, $status = 'warning')
-    {
-        $this->importLog[] = Array('message' => $msg, 'status' => $status);
-
-    }
-
-    public function getImportLog()
-    {
-        return $this->importLog;
-    }
 
 
     public function addLanguage($code, $url, $d_long = '', $d_short = '', $visible = true, $text_direction='ltr'){
@@ -456,11 +401,18 @@ class Service
 
     public function startExport(){
 
-        $response = "success";
-
-        ManagerExport::exportSiteTree();
-
+        try {
+            $response['results'] = ManagerExport::exportSiteTree();
+            $response['status'] = "success";
+        }catch (\Exception $e){
+            Log::addRecord($e);
+            $response['results'] = $this->importLog;
+            $response['status'] = "error";
+        }
         return $response;
     }
+
+
+
 
 }

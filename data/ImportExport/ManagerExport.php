@@ -12,7 +12,7 @@ use IpUpdate\Library\Model\Exception;
 class ManagerExport {
 
     const PLUGIN_TEMP_DIR = 'tmp/data/export/',
-        ARCHIVE_DIR = 'archive/',
+        ARCHIVE_DIR = 'archive',
         ZONE_FILE = 'info',
         VERSION = '4';
 
@@ -33,7 +33,7 @@ class ManagerExport {
 
             foreach ($zones as $zone) {
 
-                print "<br/>PROCESSING ZONE" . $zone->getName() . ' for LANGUAGE url:' . $language_url . '<br>';
+                Log::addRecord( "Processing zone " . $zone->getName() . ' for LANGUAGE url:' . $language_url);
 
                 if ($zone->getAssociatedModule() == 'content_management') {
 
@@ -46,13 +46,11 @@ class ManagerExport {
                             1000,
                             null,
                             1,
-                            self::getTempDir() . self::ARCHIVE_DIR . $language_url . "_" . $zoneName
+                            self::getTempDir() . self::ARCHIVE_DIR . '/'. $language_url . "_" . $zoneName
                         );
                     }catch (Exception $e){
-                        print "ERROR. Error while exporting site tree ".$e;
+                        throw \Exception("ERROR. Error while exporting site tree ".$e);
                     }
-
-
 
                 }
             }
@@ -60,7 +58,7 @@ class ManagerExport {
         }
 //
 //
-//        $zipFileName = $this->setZipFileName();
+//
 //
 //        Zip::zip(self::getTempDir(), self::ARCHIVE_DIR, $zipFileName);
 //
@@ -71,8 +69,22 @@ class ManagerExport {
 //        return $answer;
 
 
+        $zipFileName = self::setZipFileName();
+
+        try{
+            Zip::zip(self::getTempDir(), self::ARCHIVE_DIR, $zipFileName);
+        }catch (\Exception $e){
+            throw ($e);
+        }
+
+        return true;
+
     }
 
+    private static function setZipFileName()
+    {
+        return "archive_" . time() . ".zip";
+    }
 
     private static function saveSiteSettings($zones, $languages)
     {
@@ -83,7 +95,6 @@ class ManagerExport {
 
         $saveFileName = self::ZONE_FILE;
 
-        print 'saving zone';
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
         }
@@ -96,15 +107,13 @@ class ManagerExport {
 
         $fh = fopen($path . '/' . $saveFileName . '.json', 'w');
 
-        var_dump($path . '/' . $saveFileName . '.json', 'w');
-
         fwrite($fh, json_encode($content));
 
         fclose($fh);
     }
 
 
-    private static function getTempDir()
+    public static function getTempDir()
     {
         return BASE_DIR . FILE_DIR . self::PLUGIN_TEMP_DIR;
     }
@@ -153,8 +162,7 @@ class ManagerExport {
                     }
 
                 } catch (\Exception $e) {
-                    print "Export error in " . $path . "/" . $dirName . " - " . $e->getMessage();
-                    print '<br>';
+                    Log::addRecord( "Export error when exporting to " . $path . " Directory: " . $dirName . " - " . $e->getMessage());
                 }
 
 

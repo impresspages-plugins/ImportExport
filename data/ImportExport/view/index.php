@@ -11,3 +11,5 @@
 
 <div class="ipsExportForm"><?php echo $formExport->render(); ?></div>
 
+<div class="ipsImportExportBack ipgHide"><a href="?g=data&m=ImportExport&aa=index"><?php echo $this->esc('Back'); ?></a></div>
+
