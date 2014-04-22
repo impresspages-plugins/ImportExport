@@ -85,7 +85,7 @@ class Service
 
         Log::addRecord('Importing version '.$version, 'info');
 
-        $this->importZones($siteData['zones']);
+        $this->importZones($siteData['menuLists']);
 
 
         $this->importLanguages($siteData['languages']);
@@ -228,27 +228,22 @@ class Service
                     }
                     switch ($widgetName) {
                         case 'Divider':
+                            $widgetName = 'IpSeparator';
                             $content = null;
                             $processWidget = true;
                             break;
-                        case 'IpTable':
-                            $content['text'] = $widgetData['text'];
-                            $processWidget = true;
-                            break;
                         case 'Text':
-                            $content['text'] = $widgetData['text'];
-                            $processWidget = true;
-                            break;
-                        case 'IpTextImage': //  IpTextImage as IpText
                             $widgetName = 'IpText';
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
-                        case 'Title':
+                        case 'Heading':
+                            $widgetName = 'IpTitle';
                             $content['title'] = $widgetData['title'];
                             $processWidget = true;
                             break;
                         case 'Html':
+                            $widgetName = 'IpHtml';
                             $content['html'] = $widgetData['html'];
                             if (!isset($widgetValue['layout'])) {
                                 $layout = 'escape'; // default layout for code examples
@@ -272,7 +267,11 @@ class Service
                             $position
                         );
 
-                       ModelImport::addWidgetContent($instanceId, $content, $layout);
+                        if (is_int($instanceId)){
+                            ModelImport::addWidgetContent($instanceId, $content, $layout);
+                        }else{
+                            Log::addRecord('ERROR: Failed to created an instance of ' . $widgetName . ". File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
+                        }
 
                     } else {
                         Log::addRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
@@ -291,6 +290,8 @@ class Service
 
         $array_items = array();
 
+        $position = 0;
+
         if ($handle = opendir($directory)) {
             while (false !== ($file = readdir($handle))) {
                 if ($file != "." && $file != "..") {
@@ -306,7 +307,7 @@ class Service
 
                                 $buttonTitle = $pageSettings['button_title'];
                                 $pageTitle = $pageSettings['page_title'];
-                                $position = $pageSettings['row_number'];
+                                $position++;
                                 $url = $pageSettings['url'];
                                 $visible = $pageSettings['visible'];
 
@@ -336,7 +337,7 @@ class Service
 
                             $buttonTitle = $pageSettings['button_title'];
                             $pageTitle = $pageSettings['page_title'];
-                            $position = $pageSettings['row_number'];
+                            $position++;
                             $url = $pageSettings['url'];
                             $visible = $pageSettings['visible'];
 

@@ -232,7 +232,7 @@ class ModelExport {
                 break;
 
             case 'IpTitle':
-                $widgetName = 'Title';
+                $widgetName = 'Heading';
                 if (isset($widgetData['title'])) {
                     $content['title'] = $widgetData['title'];
                 }else{

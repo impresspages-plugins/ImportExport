@@ -13,6 +13,7 @@ var ipExportImport = new function () {
             if (!e.isDefaultPrevented()) {
                 $('.ipsLoading').removeClass('ipgHide');
                 $('.ipsImportForm').addClass('ipgHide');
+                $('.ipsExportForm').addClass('ipgHide');
 
                 $.ajax({
                     url: ip.baseUrl, //we assume that for already has m, g, a parameters which will lead this request to required controller
@@ -40,6 +41,7 @@ var ipExportImport = new function () {
             if (!e.isDefaultPrevented()) {
                 $('.ipsLoading').removeClass('ipgHide');
                 $('.ipsImportForm').addClass('ipgHide');
+                $('.ipsExportForm').addClass('ipgHide');
 
                 $.ajax({
                     url: ip.baseUrl, //we assume that for already has m, g, a parameters which will lead this request to required controller
@@ -58,7 +60,6 @@ var ipExportImport = new function () {
     var processResponse = function (response) {
         if (response.status && response.status == 'success') {
             //form has been successfully submitted.
-
 
             $('.ipsLoading').addClass('ipgHide');
 
