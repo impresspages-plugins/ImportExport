@@ -7,7 +7,8 @@ class Service
 
     private $menusForImporting = Array(),
         $languagesForImporting = Array(),
-        $importLog = Array();
+        $importLog = Array(),
+        $archiveDir = '';
 
     public function startImport($uploadedFile)
     {
@@ -16,6 +17,9 @@ class Service
         $this->addLogRecord('Starting importing the site. ' . basename($uploadedFile), 'info');
 
         $extractedDirName = $this->extractZip($uploadedFile);
+
+        $this->archiveDir = $extractedDirName;
+
         $this->importSiteTree($extractedDirName);
 
         $parentId = 0;
@@ -142,7 +146,7 @@ class Service
 //                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
 
             } else {
-                $languageId =  ipContent()->getLanguageByCode($language['code'])->getId();
+                $languageId = ipContent()->getLanguageByCode($language['code'])->getId();
 
 //                $languageId = Model::getLanguageIdByUrl($language['url']);
             }
@@ -236,35 +240,41 @@ class Service
 
                     if (isset($widgetValue['data'])) {
                         $widgetData = $widgetValue['data'];
-                    }else{
+                    } else {
                         $widgetData = null;
                     }
+
+                    $content = array();
 
                     switch ($widgetName) {
                         case 'Divider':
                             $content = null;
                             $processWidget = true;
                             break;
-                        case 'Table':
-                            $content['text'] = $widgetData['text'];
-                            $processWidget = true;
-                            break;
                         case 'Image':
-                            if (isset($widgetData['imageOriginal'])){
-                                $content['imageOriginal'] = $widgetData['imageOriginal'];
-                                if (isset($widgetData['cropX1'])){
+                            if (isset($widgetData['imageOriginal'])) {
+
+                                // Create a file with a  new name if a file already exists
+
+                                $newFileName = $this->createFileName($widgetData['imageOriginal']);
+
+                                $this->copyFileToRepository($widgetData['imageOriginal'], $newFileName);
+
+                                $content['imageOriginal'] = $newFileName;
+
+                                if (isset($widgetData['cropX1'])) {
                                     $content['cropX1'] = $widgetData['cropX1'];
                                 }
 
-                                if (isset($widgetData['cropX2'])){
+                                if (isset($widgetData['cropX2'])) {
                                     $content['cropX2'] = $widgetData['cropX2'];
                                 }
 
-                                if (isset($widgetData['cropY1'])){
+                                if (isset($widgetData['cropY1'])) {
                                     $content['cropY1'] = $widgetData['cropY1'];
                                 }
 
-                                if (isset($widgetData['cropY2'])){
+                                if (isset($widgetData['cropY2'])) {
                                     $content['cropY2'] = $widgetData['cropY2'];
                                 }
 
@@ -281,8 +291,15 @@ class Service
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
-                        case 'Title':
+                        case 'Heading':
+
                             $content['title'] = $widgetData['title'];
+                            if (isset($widgetData['level'])){
+                                $content['level'] = $widgetData['level'];
+                            }else{
+                                $content['level'] = 1;
+                            }
+
                             $processWidget = true;
                             break;
                         case 'Html':
@@ -311,17 +328,17 @@ class Service
                     if ($processWidget) {
                         $position++;
 
-                        if (isset($widgetValue['layout'])){
+                        if (isset($widgetValue['layout'])) {
                             $skin = $widgetValue['layout'];
-                        }else{
+                        } else {
                             $skin = 'default';
                         }
 
-                        if (!isset($widgetData)){
-                            $widgetData = array();
+                        if (!isset($widgetData)) {
+                            $content = array();
                         }
 
-                        $widgetId = \Ip\Internal\Content\Service::createWidget($widgetName, $widgetData, $skin, $revisionId, 0, $blockId, $position);
+                        $widgetId = \Ip\Internal\Content\Service::createWidget($widgetName, $content, $skin, $revisionId, 0, $blockId, $position);
 
 
 //                        \Ip\Internal\Content\Service::addWidgetInstance($widgetId, $revisionId, 0, $blockId, $position);
@@ -343,7 +360,7 @@ class Service
 //                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
 //                        $this->addLogRecord('Widget ' . $widgetName . " added. File name: ".$fileName.", Menu name: ".$menuName. ", Language: ".$languageDir, 'danger');
                     } else {
-                        $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported. File name: " . $fileName . ", Zone name: " . $menuName . ", Language: " . $languageDir, 'danger');
+                        $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported or has bad parameters. File name: " . $fileName . ", Zone name: " . $menuName . ", Language: " . $languageDir, 'danger');
                     }
                 }
 
@@ -351,6 +368,38 @@ class Service
 
 
         }
+    }
+
+    private function copyFileToRepository($fileNameInArchive, $newFileName)
+    {
+
+        $fileFromArchive = ipFile('file/secure/tmp/'.$this->archiveDir.'/archive/'.$fileNameInArchive);
+        if (copy($fileFromArchive , ipFile('file/repository/'.$newFileName))){
+            return true;
+        }else{
+            return false;
+        }
+
+    }
+
+    private function createFileName($fullPathName)
+    {
+
+        $path = pathinfo($fullPathName, PATHINFO_DIRNAME);
+        $ext = pathinfo($fullPathName, PATHINFO_EXTENSION);
+        $filenameWoExt = basename($fullPathName, "." . $ext);
+
+        $cnt = 0;
+
+        $newFilename = $filenameWoExt . "." . $ext;
+
+        while (file_exists(ipFile($path . '/' . $newFilename))) {
+
+            $newFilename = $filenameWoExt . '_' . $cnt . "." . $ext;
+            $cnt++;
+        }
+
+        return $newFilename;
     }
 
     private function addPages($directory, $parentId, $recursive, $menuName, $language)
