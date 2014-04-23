@@ -10,7 +10,7 @@ namespace Modules\data\ImportExport\widgets;
 class IpImageGallery extends Widget {
 
     public function getIp4Name() {
-        return 'ImageGallery';
+        return 'Gallery';
     }
 
     public function getData(){
@@ -24,11 +24,11 @@ class IpImageGallery extends Widget {
                 self::copyImage($image['imageOriginal']);
             }
 
-            $images[] = self::getSelectedWidgetParams($image, array('imageOriginal', 'cropX1', 'cropY1', 'cropX2', 'cropY2'));
+            $images[] = self::getSelectedWidgetParams($image, array('imageOriginal', 'cropX1', 'cropY1', 'cropX2', 'cropY2', 'title'));
 
         }
 
-        return $images;
+        return array('images' => $images);
 
     }
 
