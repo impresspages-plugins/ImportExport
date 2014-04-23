@@ -128,10 +128,9 @@ class ModelExport {
         $widgetData = array();
         foreach ($widgetRecords as $widgetRecord) {
             try{
-
                 $widgetData[] = self::getWidgetExportData($widgetRecord);
             }catch (\Exception $e){
-                Log::addRecord($e);
+                Log::addRecord($e->getMessage());
             }
         }
 
@@ -140,15 +139,22 @@ class ModelExport {
 
     public static function getWidgetExportData($widgetRecord) {
 
+
         $widgetName = $widgetRecord['name'];
 
-        $widgetClassName = "Modules\\data\\ImportExport\\widgets\\".$widgetName;
+        $widgetClassName = "\\Modules\\data\\ImportExport\\widgets\\".$widgetName;
 
-        if (!class_exists($widgetClassName, false /* do not attempt autoload */)) {
-//            throw new \Exception("Unknown widget class ".$widgetClassName);
+        if (!class_exists($widgetClassName)) {
+            throw new \Exception("Unknown widget class ".$widgetClassName);
         }
 
-        $widget = new $widgetClassName($widgetRecord);
+
+        try{
+            $widget = new $widgetClassName($widgetRecord);
+        }catch(\Exception $e){
+            throw new \Exception($e);
+        }
+
 
         $elements  = $widget->getIp4Content();
 
