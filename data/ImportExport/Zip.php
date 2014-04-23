@@ -9,6 +9,20 @@ class Zip
     {
 
         require_once(__DIR__ . '/lib/pclzip.lib.php');
+
+        $cnt = '';
+
+        while (file_exists($path . '/' . $archiveFileName.$cnt.'.zip')){
+            $cnt++;
+        }
+
+
+        if ($cnt){
+            $archiveFileName .= $cnt;
+        }
+
+        $archiveFileName .= '.zip';
+
         $archive = new \PclZip($path . '/' . $archiveFileName);
 
         Log::addRecord( "Copying to archive:" . $path . $archiveFileName);

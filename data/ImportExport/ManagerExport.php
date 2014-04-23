@@ -88,7 +88,7 @@ class ManagerExport {
 
     private static function setZipFileName()
     {
-        return "archive_" . time() . ".zip";
+        return "archive_" . date('Y-m-d_Hi');
     }
 
     private static function saveSiteSettings($zones, $languages)
