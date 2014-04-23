@@ -56,29 +56,34 @@ class ManagerExport {
             }
 
         }
-//
-//
-//
-//
-//        Zip::zip(self::getTempDir(), self::ARCHIVE_DIR, $zipFileName);
-//
-//        $this->delTree(self::getTempDir() . self::ARCHIVE_DIR);
-//
-//        $this->downloadLink = BASE_URL . FILE_DIR . self::PLUGIN_TEMP_DIR . $zipFileName;
-//
-//        return $answer;
-
 
         $zipFileName = self::setZipFileName();
 
         try{
             Zip::zip(self::getTempDir(), self::ARCHIVE_DIR, $zipFileName);
+
+            $archiveFullPath = self::getTempDir(). self::ARCHIVE_DIR;
+
+            if (is_dir($archiveFullPath)) {
+                self::delTree($archiveFullPath);
+            }
+
         }catch (\Exception $e){
             throw ($e);
         }
 
         return true;
 
+
+    }
+
+    // By nbari at dalmp dot com. http://www.php.net/manual/en/function.rmdir.php
+    private static function delTree($dir) {
+        $files = array_diff(scandir($dir), array('.','..'));
+        foreach ($files as $file) {
+            (is_dir("$dir/$file")) ? self::delTree("$dir/$file") : unlink("$dir/$file");
+        }
+        return rmdir($dir);
     }
 
     private static function setZipFileName()
@@ -167,7 +172,11 @@ class ManagerExport {
 
 
                 if (isset($content)) {
-                    self::savePages($content, $path, str_pad($key, 4, '0', STR_PAD_LEFT).'_'.$dirName);
+                    try{
+                        self::savePages($content, $path, str_pad($key, 4, '0', STR_PAD_LEFT).'_'.$dirName);
+                    } catch (\Exception $e) {
+                        Log::addRecord( "Export error when saving to " . $path . " Directory: " . $dirName . " - " . $e->getMessage());
+                    }
                 }
             }
         }
@@ -199,6 +208,7 @@ class ManagerExport {
 
     private static function savePages($content, $path, $saveFileName)
     {
+
         $path = preg_replace('/[^\/a-zA-Z0-9_-]$/s', '', $path);
         $saveFileName = preg_replace('/[^a-zA-Z0-9_-]$/s', '', $saveFileName);
         if (!file_exists($path)) {
@@ -210,6 +220,8 @@ class ManagerExport {
         fwrite($fh, json_encode($content));
 
         fclose($fh);
+
+        return true;
 
     }
 

@@ -105,19 +105,6 @@ class ModelImport
             $zoneName = $revisionRecord['zoneName'];
             $pageId = $revisionRecord['pageId'];
 
-//
-//            $zone = $site->getZone($zoneName);
-//            if ($zone === false) {
-//                //TODOX service must not return Response object.
-//                throw new Exception( 'Unknown zone "' . $zoneName . '"');
-//            }
-
-//            $page = $zone->getPage($pageId);
-//            if ($page === false) {
-//                //TODOX service must not return Response object.
-//                throw new Exception('Page not found "' . $zoneName . '"/"' . $pageId . '"');
-//            }
-
         }
 
         $widgetObject = \Modules\standard\content_management\Model::getWidgetObject($widgetName);

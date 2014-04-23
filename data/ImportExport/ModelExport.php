@@ -121,14 +121,9 @@ class ModelExport {
     public function getElements($zoneName, $pageId){
 
         global $site;
-        //self::getInstances($pageId);
-
-//        $page = $site->getCurrentElement();
 
         $revision = \Ip\Revision::getPublishedRevision($zoneName, $pageId);
-//        var_dump($revision);
         $widgetRecords = \Modules\standard\content_management\Model::getBlockWidgetRecords('main', $revision['revisionId']); // TODO X blocks with different names
-        //\Modules\standard\content_management\Model::getWidgetFullRecord($instanceId);
 
         $widgetData = array();
         foreach ($widgetRecords as $widgetRecord) {
@@ -138,181 +133,29 @@ class ModelExport {
             }catch (\Exception $e){
                 Log::addRecord($e);
             }
-
         }
 
         return $widgetData;
     }
 
-    private static function getSelectedWidgetParams($widgetData, $paramsList){
-
-        $params = array();
-
-        foreach ($paramsList as $paramKey){
-
-            if (isset($widgetData[$paramKey])){
-                $params[$paramKey] = $widgetData[$paramKey];
-            }
-
-        }
-        return $params;
-    }
-
     public static function getWidgetExportData($widgetRecord) {
-//        var_dump($widgetRecord);
 
         $widgetName = $widgetRecord['name'];
-        $widgetData = $widgetRecord['data'];
-        $processWidget = false;
-        $content = array();
-        switch ($widgetName) {
-            case 'IpImage':
-                $widgetName = 'Image';
 
-                if (isset($widgetData['imageOriginal'])){
-                    self::copyImage($widgetData['imageOriginal']);
-                }
+        $widgetClassName = "Modules\\data\\ImportExport\\widgets\\".$widgetName;
 
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => self::getSelectedWidgetParams($widgetData, array('imageOriginal', 'cropX1', 'cropY1', 'cropX2', 'cropY2'))
-                );
-
-                $processWidget = true;
-
-            break;
-            case 'IpSeparator':
-                $widgetName = 'Divider';
-                $content = null;
-
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout']);
-                $processWidget = true;
-                break;
-            case 'IpTable':
-                $widgetName = 'Text';
-
-                if (isset($widgetData['text'])){
-                    $content['text'] = $widgetData['text'];
-                }else{
-                    $content['text'] = '';
-                }
-
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => array('text' => $content['text']));
-
-                $processWidget = true;
-                break;
-            case 'IpText':
-                $widgetName = 'Text';
-                $content['text'] = $widgetData['text'];
-
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => array(
-                        'text' => $widgetData['text']
-                    ));
-
-                $processWidget = true;
-                break;
-            case 'IpTextImage': //  IpTextImage as IpText
-                $widgetName = 'TextImage';
-                $content['text'] = $widgetData['text'];
-
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => array(
-                        'imageSmall' => $widgetData['text'],
-                        'title' => $widgetData['title'],
-                        'text' => $content['text']
-                    ));
-
-                $processWidget = true;
-                break;
-
-            case 'IpTitle':
-                $widgetName = 'Heading';
-                if (isset($widgetData['title'])) {
-                    $content['title'] = $widgetData['title'];
-                }else{
-                    $content['title'] = '';
-                }
-
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => array(
-                        'title' => $content['title']
-                    ));
-
-                $processWidget = true;
-                break;
-
-            case 'IpHtml':
-                $widgetName = 'Html';
-                $content['html'] = $widgetData['html'];
-                if (!isset($widgetValue['layout'])) {
-                    $layout = 'escape'; // default layout for code examples
-                }
-
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => array(
-                        'html' => $content['html'],
-                    ));
-
-                $processWidget = true;
-                break;
-
-            case 'ipFiledoc':
-                $widgetName = 'FileDoc';
-
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => array(
-                        'pageFile' => $widgetData['pageFile'],
-                    ));
-
-                $processWidget = true;
-
-                break;
-
-            case 'ipCodeHighlight':
-                $widgetName = 'CodeHighlight';
-                $elements = array ('type' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => array(
-                        'mode' => $widgetData['mode'],
-                        'hlLine' => $widgetData['hlLine'],
-                        'showLines' => $widgetData['showLines'],
-                        'code' => $widgetData['code'],
-                    ));
-                $processWidget = true;
-                break;
-
-            case 'ipCustomMenu':
-                $widgetName = 'CustomMenu';
-                $elements = array ('name' => $widgetName,
-                    'layout' => $widgetRecord['layout'],
-                    'data' => array(
-                        'menuMode' => $widgetData['menuMode'],
-                        'menuDepth' => $widgetData['menuDepth'],
-                        'pages' => $widgetData['pages'],
-                    ));
-
-                break;
-
-            default:
-                $content = null;
-                $elements = null;
-                break;
+        if (!class_exists($widgetClassName, false /* do not attempt autoload */)) {
+//            throw new \Exception("Unknown widget class ".$widgetClassName);
         }
 
-        if (!$processWidget){
+        $widget = new $widgetClassName($widgetRecord);
+
+        $elements  = $widget->getIp4Content();
+
+        if (!$widget->isEnabled()){
 
             throw new \Exception('ERROR: Widget '. $widgetName.' not supported');
         }
-
 
         return $elements;
     }
@@ -322,40 +165,9 @@ class ModelExport {
 
 
         $retval =  \Modules\standard\menu_management\Db::getPage($pageId); // TODO copy only some properties from a list below
-//        $retval = array(
-//            'id' => $pageId,
-//            'row_number' => $page->,
-//            parent,
-//            button_title,
-//            visible,
-//            page_title,
-//            keywords,
-//            description,
-//            url,
-//            last_modified,
-//            created_on,
-//            type,
-//            redirect_url
-//        );
 
         return $retval;
     }
 
-    private static function copyImage($imageFileName)
-    {
-        $destination = ManagerExport::getTempDir().ManagerExport::ARCHIVE_DIR.'/'.$imageFileName;
-        $dirName = dirname($destination);
 
-        if (!is_dir($dirName)){
-            mkdir($dirName, null,true);
-        }
-
-        if (copy(BASE_DIR.$imageFileName, $destination)){
-
-            return true;
-        }else{
-            return false;
-        }
-
-    }
 } 

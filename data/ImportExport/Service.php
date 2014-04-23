@@ -385,8 +385,6 @@ class Service
                 (:code, :url, :d_long, :d_short, :visible, :text_direction)";
 
 
-//            $id = IpDb()->insert(DB_PREF . 'language', $data);
-
             $sth = $dbh->prepare($sql);
 
             $sth->execute($data);
