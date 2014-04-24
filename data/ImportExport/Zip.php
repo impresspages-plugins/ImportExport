@@ -25,10 +25,10 @@ class Zip
 
         $archive = new \PclZip($path . '/' . $archiveFileName);
 
-        Log::addRecord( "Copying to archive:" . $path . $archiveFileName);
+        Log::addRecord( 'Copying to archive');
         $v_dir = $path . $archiveDir; // or dirname(__FILE__);
         $v_list = $archive->add($v_dir, PCLZIP_OPT_REMOVE_PATH, $path);
-
+        return $archiveFileName;
     }
 
     public static function extractZip($file)

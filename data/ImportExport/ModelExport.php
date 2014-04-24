@@ -72,7 +72,6 @@ class ModelExport {
     public static function getLanguages(){
         global $site;
         $languages = $site->getLanguages();
-//        var_dump($languages);
         return self::getExportLanguages($languages);
     }
 
@@ -114,7 +113,7 @@ class ModelExport {
         return $zoneList;
     }
 
-    /**
+       /**
      * Returns widget elements
      * @param $pageId
      */
@@ -127,8 +126,20 @@ class ModelExport {
 
         $widgetData = array();
         foreach ($widgetRecords as $widgetRecord) {
+
             try{
-                $widgetData[] = self::getWidgetExportData($widgetRecord);
+
+                $widget = self::getWidget($widgetRecord);
+                if (!$widget->isEnabled()){
+                    throw new \Exception('ERROR: Widget '. $widgetRecord['name'].' not supported');
+                }
+
+                $widgetContent = $widget->getIp4Content();
+
+                foreach ($widgetContent as $widgetContentItem){
+                    $widgetData[] = $widgetContentItem;
+                }
+
             }catch (\Exception $e){
                 Log::addRecord($e->getMessage());
             }
@@ -137,17 +148,16 @@ class ModelExport {
         return $widgetData;
     }
 
-    public static function getWidgetExportData($widgetRecord) {
+    public static function getWidget($widgetRecord) {
 
 
         $widgetName = $widgetRecord['name'];
 
-        $widgetClassName = "\\Modules\\data\\ImportExport\\widgets\\".$widgetName;
+        $widgetClassName = "\\Modules\\data\\ImportExport\\widgetsExport\\".$widgetName;
 
         if (!class_exists($widgetClassName)) {
             throw new \Exception("Unknown widget class ".$widgetClassName);
         }
-
 
         try{
             $widget = new $widgetClassName($widgetRecord);
@@ -155,15 +165,7 @@ class ModelExport {
             throw new \Exception($e);
         }
 
-
-        $elements  = $widget->getIp4Content();
-
-        if (!$widget->isEnabled()){
-
-            throw new \Exception('ERROR: Widget '. $widgetName.' not supported');
-        }
-
-        return $elements;
+        return $widget;
     }
 
     public static function getPageSettings($pageId) {

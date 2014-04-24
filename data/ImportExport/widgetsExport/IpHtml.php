@@ -5,23 +5,23 @@
  * Date: 4/23/14
  * Time: 1:04 PM
  */
-namespace Modules\data\ImportExport\widgets;
+namespace Modules\data\ImportExport\widgetsExport;
 
-class IpText extends Widget {
+class IpHtml extends Widget {
 
     public function getIp4Name() {
-        return 'Text';
+        return 'Html';
     }
 
     public function getData(){
 
-        if (isset($this->data['text'])){
-            $text = $this->data['text'];
+        if (isset($this->data['html'])){
+            $text = $this->data['html'];
         }else{
             $text = '';
         }
 
-        return array('text' => $text);
+        return array('html' => $text);
 
     }
 

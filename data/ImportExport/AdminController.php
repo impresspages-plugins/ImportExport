@@ -56,7 +56,7 @@ class AdminController extends \Ip\Controller
 
         $response['status'] =   'success';
         $response['log']  = Log::getLog();
-
+        $response['downloadUrl']  = $results['results'];
        return $this->returnJson($response);
     }
 }

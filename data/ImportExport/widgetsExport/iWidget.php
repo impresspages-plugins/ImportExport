@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\data\ImportExport\widgets;
+namespace Modules\data\ImportExport\widgetsExport;
 
 
 interface iWidget {

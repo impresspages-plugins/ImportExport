@@ -80,6 +80,9 @@
             }
         }
 
+        $('.ipsImportExportDownloadUrl').attr('href', response.downloadUrl);
+        $('.ipsImportExportDownloadUrl').html('Download archive ' + response.downloadUrl);
+
         $('.ipsImportExportBack').removeClass('ipgHide');
 
     }

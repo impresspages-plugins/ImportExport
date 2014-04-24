@@ -60,7 +60,7 @@ class ManagerExport {
         $zipFileName = self::setZipFileName();
 
         try{
-            Zip::zip(self::getTempDir(), self::ARCHIVE_DIR, $zipFileName);
+            $archiveFileName = Zip::zip(self::getTempDir(), self::ARCHIVE_DIR, $zipFileName);
 
             $archiveFullPath = self::getTempDir(). self::ARCHIVE_DIR;
 
@@ -72,8 +72,7 @@ class ManagerExport {
             throw ($e);
         }
 
-        return true;
-
+        return BASE_URL.'file/tmp/data/export/'.$archiveFileName;
 
     }
 

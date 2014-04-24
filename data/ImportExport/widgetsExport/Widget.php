@@ -6,7 +6,7 @@
  * Time: 12:26 PM
  */
 
-namespace Modules\data\ImportExport\widgets;
+namespace Modules\data\ImportExport\widgetsExport;
 
 abstract class Widget implements iWidget {
 
@@ -51,7 +51,8 @@ abstract class Widget implements iWidget {
         if (!empty($data)){
             $elements['data'] = $data;
         }
-        return $elements;
+
+        return array($elements);
     }
 
 
@@ -68,6 +69,23 @@ abstract class Widget implements iWidget {
         return $params;
     }
 
+    protected static function copyImage($imageFileName)
+    {
+        $destination = \Modules\data\ImportExport\ManagerExport::getTempDir().
+            \Modules\data\ImportExport\ManagerExport::ARCHIVE_DIR.'/'.$imageFileName;
+        $dirName = dirname($destination);
+
+        if (!is_dir($dirName)){
+            mkdir($dirName, null,true);
+        }
+
+        if (copy(BASE_DIR.$imageFileName, $destination)){
+            return true;
+        }else{
+            return false;
+        }
+
+    }
 
 }
 

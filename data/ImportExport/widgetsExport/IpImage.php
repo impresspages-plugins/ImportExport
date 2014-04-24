@@ -5,7 +5,7 @@
  * Date: 4/23/14
  * Time: 1:04 PM
  */
-namespace Modules\data\ImportExport\widgets;
+namespace Modules\data\ImportExport\widgetsExport;
 
 class IpImage extends Widget {
 
@@ -27,24 +27,6 @@ class IpImage extends Widget {
         }
 
         return self::getSelectedWidgetParams($this->data, array('imageOriginal', 'cropX1', 'cropY1', 'cropX2', 'cropY2'));
-
-    }
-
-    private static function copyImage($imageFileName)
-    {
-        $destination = \Modules\data\ImportExport\ManagerExport::getTempDir().
-            \Modules\data\ImportExport\ManagerExport::ARCHIVE_DIR.'/'.$imageFileName;
-        $dirName = dirname($destination);
-
-        if (!is_dir($dirName)){
-            mkdir($dirName, null,true);
-        }
-
-        if (copy(BASE_DIR.$imageFileName, $destination)){
-            return true;
-        }else{
-            return false;
-        }
 
     }
 

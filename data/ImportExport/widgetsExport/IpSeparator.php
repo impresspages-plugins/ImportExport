@@ -5,7 +5,7 @@
  * Date: 4/23/14
  * Time: 11:59 AM
  */
-namespace Modules\data\ImportExport\widgets;
+namespace Modules\data\ImportExport\widgetsExport;
 
 class IpSeparator extends  Widget {
 
