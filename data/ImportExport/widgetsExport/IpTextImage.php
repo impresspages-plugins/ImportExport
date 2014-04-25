@@ -37,7 +37,7 @@ class IpTextImage extends IpText
     public function getIp4ImageContent()
     {
 
-        $widgetName = 'Text';
+        $widgetName = 'Image';
 
         $elements = array(
             'type' => $widgetName,
