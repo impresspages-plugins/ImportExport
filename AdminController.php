@@ -10,7 +10,7 @@ class AdminController extends \Ip\Controller
     public function index()
     {
 
-        $form = Model::getForm();
+        $form = ModelImport::getForm();
 
         $data = array (
             'form' => $form
@@ -25,7 +25,7 @@ class AdminController extends \Ip\Controller
 
     public function import()
     {
-        $form = Model::getForm();
+        $form = ModelImport::getForm();
 
         $fileField = $form->getField('siteFile');
         $files = $fileField->getFiles($_POST, $fileField->getName());
@@ -38,7 +38,7 @@ class AdminController extends \Ip\Controller
         }
 
 
-        $response['log'] =   $service->getImportLog();
+        $response['log'] =   Log::getLog();
         $response['status'] =   'success';
         return new \Ip\Response\Json($response);
     }

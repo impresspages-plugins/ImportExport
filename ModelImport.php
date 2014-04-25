@@ -1,7 +1,7 @@
 <?php
 namespace Plugin\ImportExport;
 
-class Model
+class ModelImport
 {
 
     public static function getForm()

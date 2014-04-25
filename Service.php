@@ -7,16 +7,15 @@ class Service
 
     private $menusForImporting = Array(),
         $languagesForImporting = Array(),
-        $importLog = Array(),
         $archiveDir = '';
 
     public function startImport($uploadedFile)
     {
 
 
-        $this->addLogRecord('Starting importing the site. ' . basename($uploadedFile), 'info');
+        Log::addRecord('Starting importing the site. ' . basename($uploadedFile), 'info');
 
-        $extractedDirName = $this->extractZip($uploadedFile);
+        $extractedDirName = Zip::extractZip($uploadedFile);
 
         $this->archiveDir = $extractedDirName;
 
@@ -36,9 +35,9 @@ class Service
             foreach ($this->menusForImporting as $menuItem) {
 
                 $menuName = $menuItem['nameForImporting'];
-                $this->addLogRecord('MENU NAME: ' . $menuName, 'info');
+                Log::addRecord('MENU NAME: ' . $menuName, 'info');
                 $recursive = true;
-                $this->addLogRecord('Processing language: ' . $language->getCode(), 'info');
+                Log::addRecord('Processing language: ' . $language->getCode(), 'info');
                 $menu = \Ip\Internal\Pages\Service::getMenu($languageCode, $menuName);
                 $parentSubPageId = $menu['id'];
 
@@ -50,7 +49,7 @@ class Service
 
                 if (is_dir($directory)) {
 
-                    $this->addLogRecord("Processing:" . $directory);
+                    Log::addRecord("Processing:" . $directory);
 
                     $this->addPages($directory, $parentSubPageId, $recursive, $menuName, $language);
 
@@ -59,10 +58,10 @@ class Service
 
 
         } catch (\Exception $e) {
-            $this->addLogRecord("Skipping:" . $e);
+            Log::addRecord("Skipping:" . $e);
         }
 
-        $this->addLogRecord('Finished importing', 'success');
+        Log::addRecord('Finished importing', 'success');
         return true;
     }
 
@@ -77,7 +76,7 @@ class Service
 
         $version = $siteData['version'];
 
-        $this->addLogRecord('Importing version ' . $version, 'info');
+        Log::addRecord('Importing version ' . $version, 'info');
 
         $this->importLanguages($siteData['languages']);
 
@@ -120,7 +119,7 @@ class Service
                 if (!isset($menuExists['isDeleted']) || ($menuExists['isDeleted'] == '1')) {
                     \Ip\Internal\Pages\Service::createMenu('en', $menuName, $menuTitle);
                 } else {
-                    $this->addLogRecord('Menu ' . $menuName . ' already exists. Importing anyway.', 'error');
+                    Log::addRecord('Menu ' . $menuName . ' already exists. Importing anyway.', 'error');
                 }
 
             } catch (\Exception $e) {
@@ -148,7 +147,6 @@ class Service
             } else {
                 $languageId = ipContent()->getLanguageByCode($language['code'])->getId();
 
-//                $languageId = Model::getLanguageIdByUrl($language['url']);
             }
             //TODO
 
@@ -159,42 +157,7 @@ class Service
         return true;
     }
 
-    private function extractZip($file)
-    {
-        $extractSubDir = false;
 
-        $fileName = basename($file);
-
-        try {
-            $zipLib = ipFile('Plugin/ImportExport/lib/pclzip.lib.php');
-            require_once($zipLib);
-
-            $archive = new \PclZip(ipFile('file/secure/tmp/' . $fileName));
-
-            $zipNameNoExt = basename($fileName, '.zip');
-            $extractSubDir = $zipNameNoExt;
-            $count = 0;
-            while (is_file(ipFile('file/secure/tmp/' . $extractSubDir)) || is_dir(
-                    ipFile('file/secure/tmp/' . $extractSubDir)
-                )) {
-                $count++;
-                $extractSubDir = $zipNameNoExt . '_' . $count;
-            }
-
-            if ($archive->extract(
-                    PCLZIP_OPT_PATH,
-                    ipFile('file/secure/tmp'),
-                    PCLZIP_OPT_ADD_PATH,
-                    $extractSubDir
-                ) == 0
-            ) {
-                die("Error : " . $archive->errorInfo(true));
-            }
-        } catch (\Exception $e) {
-            $this->addLogRecord($e);
-        }
-        return $extractSubDir;
-    }
 
     private function importWidgets($fileName, $pageId, $menuName, $language)
     {
@@ -286,11 +249,13 @@ class Service
                             $content['text'] = $widgetData['text'];
                             $processWidget = true;
                             break;
-                        case 'TextImage': //  IpTextImage as IpText
-                            $widgetName = 'Text';
-                            $content['text'] = $widgetData['text'];
+
+                        case 'Gallery':
+                            $content = $widgetData;
                             $processWidget = true;
                             break;
+
+
                         case 'Heading':
 
                             $content['title'] = $widgetData['title'];
@@ -360,7 +325,7 @@ class Service
 //                        \Ip\Module\Content\Service::addWidgetContent($instanceId, $content, $layout);
 //                        $this->addLogRecord('Widget ' . $widgetName . " added. File name: ".$fileName.", Menu name: ".$menuName. ", Language: ".$languageDir, 'danger');
                     } else {
-                        $this->addLogRecord('ERROR: Widget ' . $widgetName . " not supported or has bad parameters. File name: " . $fileName . ", Zone name: " . $menuName . ", Language: " . $languageDir, 'danger');
+                        Log::addRecord('ERROR: Widget ' . $widgetName . " not supported or has bad parameters. File name: " . $fileName . ", Zone name: " . $menuName . ", Language: " . $languageDir, 'danger');
                     }
                 }
 
@@ -444,7 +409,7 @@ class Service
 
                                 $this->addPages($directory . "/" . $file, $pageId, $recursive, $menuName, $language);
                             } else {
-                                $this->addLogRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Menu name: " . $menuName);
+                                Log::addRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Menu name: " . $menuName);
                             }
                         }
 
@@ -486,14 +451,5 @@ class Service
         return $array_items;
     }
 
-    private function addLogRecord($msg, $status = 'warning')
-    {
-        $this->importLog[] = Array('message' => $msg, 'status' => $status);
 
-    }
-
-    public function getImportLog()
-    {
-        return $this->importLog;
-    }
 }
