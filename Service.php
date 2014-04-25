@@ -251,10 +251,43 @@ class Service
                             break;
 
                         case 'Gallery':
-                            $content = $widgetData;
+                            foreach ($widgetData['images'] as $image){
+
+                                $newImage= array();
+
+                                if (isset($image['imageOriginal'])) {
+
+                                    // Create a file with a  new name if a file already exists
+
+                                    $newFileName = $this->createFileName($image['imageOriginal']);
+
+                                    $this->copyFileToRepository($image['imageOriginal'], $newFileName);
+
+                                    $newImage['imageOriginal'] = $newFileName;
+
+                                    if (isset($image['cropX1'])) {
+                                        $newImage['cropX1'] = $image['cropX1'];
+                                    }
+
+                                    if (isset($image['cropX2'])) {
+                                        $newImage['cropX2'] = $image['cropX2'];
+                                    }
+
+                                    if (isset($image['cropY1'])) {
+                                        $newImage['cropY1'] = $image['cropY1'];
+                                    }
+
+                                    if (isset($image['cropY2'])) {
+                                        $newImage['cropY2'] = $image['cropY2'];
+                                    }
+
+                                }
+                                $content['images'][] = $newImage;
+
+                            }
+
                             $processWidget = true;
                             break;
-
 
                         case 'Heading':
 
