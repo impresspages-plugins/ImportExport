@@ -7,9 +7,11 @@
  */
 namespace Modules\data\ImportExport\widgetsExport;
 
-class IpSeparator extends  Widget {
+class IpSeparator extends Widget
+{
 
-    public function getIp4Name() {
+    public function getIp4Name()
+    {
         return 'Divider';
     }
 

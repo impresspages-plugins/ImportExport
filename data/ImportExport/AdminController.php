@@ -14,15 +14,15 @@ class AdminController extends \Ip\Controller
         $formImport = ModelImport::getFormImport();
         $formExport = ModelExport::getFormExport();
 
-        $data = array (
+        $data = array(
             'formImport' => $formImport,
             'formExport' => $formExport
         );
 
         $view = \Ip\View::create('view/index.php', $data);
 
-        $site->addJavascript(BASE_URL.PLUGIN_DIR.'data/ImportExport/public/import.js');
-        $site->addJavascript(BASE_URL.PLUGIN_DIR.'data/ImportExport/public/export.js');
+        $site->addJavascript(BASE_URL . PLUGIN_DIR . 'data/ImportExport/public/import.js');
+        $site->addJavascript(BASE_URL . PLUGIN_DIR . 'data/ImportExport/public/export.js');
 
         return $view->render();
     }
@@ -37,26 +37,27 @@ class AdminController extends \Ip\Controller
         $service = New Service();
 
 
-        foreach ($files as $file){
+        foreach ($files as $file) {
 
             $service->startImport($file);
         }
 
 
-        $response['log'] =   Log::getLog();
-        $response['status'] =   'success';
+        $response['log'] = Log::getLog();
+        $response['status'] = 'success';
 
         return $this->returnJson($response);
     }
 
-    public function export(){
+    public function export()
+    {
 
         $service = New Service();
         $results = $service->startExport();
 
-        $response['status'] =   'success';
-        $response['log']  = Log::getLog();
-        $response['downloadUrl']  = $results['results'];
-       return $this->returnJson($response);
+        $response['status'] = 'success';
+        $response['log'] = Log::getLog();
+        $response['downloadUrl'] = $results['results'];
+        return $this->returnJson($response);
     }
 }

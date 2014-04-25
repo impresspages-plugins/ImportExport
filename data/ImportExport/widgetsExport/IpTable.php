@@ -7,6 +7,7 @@
  */
 namespace Modules\data\ImportExport\widgetsExport;
 
-class IpTable extends  IpText {
+class IpTable extends IpText
+{
 
 }

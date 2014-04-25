@@ -9,14 +9,16 @@ namespace Modules\data\ImportExport;
 
 use IpUpdate\Library\Model\Exception;
 
-class ManagerExport {
+class ManagerExport
+{
 
     const PLUGIN_TEMP_DIR = 'tmp/data/export/',
         ARCHIVE_DIR = 'archive',
         ZONE_FILE = 'info',
         VERSION = '4';
 
-    public static function exportSiteTree() {
+    public static function exportSiteTree()
+    {
 
         global $site;
 
@@ -33,23 +35,23 @@ class ManagerExport {
 
             foreach ($zones as $zone) {
 
-                Log::addRecord( "Processing zone " . $zone->getName() . ' for LANGUAGE url:' . $language_url);
+                Log::addRecord("Processing zone " . $zone->getName() . ' for LANGUAGE url:' . $language_url);
 
                 if ($zone->getAssociatedModule() == 'content_management') {
 
                     $zoneName = $zone->getName();
 
-                    try{
+                    try {
                         self::getPages(
                             $zone,
                             $language_id,
                             1000,
                             null,
                             1,
-                            self::getTempDir() . self::ARCHIVE_DIR . '/'. $language_url . "_" . $zoneName
+                            self::getTempDir() . self::ARCHIVE_DIR . '/' . $language_url . "_" . $zoneName
                         );
-                    }catch (Exception $e){
-                        throw \Exception("ERROR. Error while exporting site tree ".$e);
+                    } catch (Exception $e) {
+                        throw \Exception("ERROR. Error while exporting site tree " . $e);
                     }
 
                 }
@@ -59,26 +61,27 @@ class ManagerExport {
 
         $zipFileName = self::setZipFileName();
 
-        try{
+        try {
             $archiveFileName = Zip::zip(self::getTempDir(), self::ARCHIVE_DIR, $zipFileName);
 
-            $archiveFullPath = self::getTempDir(). self::ARCHIVE_DIR;
+            $archiveFullPath = self::getTempDir() . self::ARCHIVE_DIR;
 
             if (is_dir($archiveFullPath)) {
                 self::delTree($archiveFullPath);
             }
 
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             throw ($e);
         }
 
-        return BASE_URL.'file/tmp/data/export/'.$archiveFileName;
+        return BASE_URL . 'file/tmp/data/export/' . $archiveFileName;
 
     }
 
     // By nbari at dalmp dot com. http://www.php.net/manual/en/function.rmdir.php
-    private static function delTree($dir) {
-        $files = array_diff(scandir($dir), array('.','..'));
+    private static function delTree($dir)
+    {
+        $files = array_diff(scandir($dir), array('.', '..'));
         foreach ($files as $file) {
             (is_dir("$dir/$file")) ? self::delTree("$dir/$file") : unlink("$dir/$file");
         }
@@ -147,7 +150,7 @@ class ManagerExport {
                         $maxDepth,
                         $element->getId(),
                         $curDepth + 1,
-                        $path . "/" . str_pad($key, 4, '0', STR_PAD_LEFT).'_'.$dirName
+                        $path . "/" . str_pad($key, 4, '0', STR_PAD_LEFT) . '_' . $dirName
                     )
                 );
 
@@ -159,22 +162,22 @@ class ManagerExport {
                     $content = Array();
                     $content['settings'] = self::getPageSettings($element->getId());
                     $content['settings']['position'] = $key;
-                    $widgetData  = $model->getElements($zone->getName(), $element->getId());
+                    $widgetData = $model->getElements($zone->getName(), $element->getId());
 
-                    if (!is_null($widgetData)){
+                    if (!is_null($widgetData)) {
                         $content['widgets'] = $widgetData;
                     }
 
                 } catch (\Exception $e) {
-                    Log::addRecord( "Export error when exporting to " . $path . " Directory: " . $dirName . " - " . $e->getMessage());
+                    Log::addRecord("Export error when exporting to " . $path . " Directory: " . $dirName . " - " . $e->getMessage());
                 }
 
 
                 if (isset($content)) {
-                    try{
-                        self::savePages($content, $path, str_pad($key, 4, '0', STR_PAD_LEFT).'_'.$dirName);
+                    try {
+                        self::savePages($content, $path, str_pad($key, 4, '0', STR_PAD_LEFT) . '_' . $dirName);
                     } catch (\Exception $e) {
-                        Log::addRecord( "Export error when saving to " . $path . " Directory: " . $dirName . " - " . $e->getMessage());
+                        Log::addRecord("Export error when saving to " . $path . " Directory: " . $dirName . " - " . $e->getMessage());
                     }
                 }
             }
@@ -196,9 +199,9 @@ class ManagerExport {
             'description' => $allSettings['description'],
             'url' => $allSettings['url'],
             'last_modified' => $allSettings['last_modified'],
-            'created_on'  => $allSettings['created_on'],
+            'created_on' => $allSettings['created_on'],
             'type' => $allSettings['type'],
-            'redirect_url'  => $allSettings['redirect_url']
+            'redirect_url' => $allSettings['redirect_url']
         );
 
 
@@ -223,7 +226,6 @@ class ManagerExport {
         return true;
 
     }
-
 
 
 }

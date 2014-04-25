@@ -1,29 +1,32 @@
 <?php
 namespace Modules\data\ImportExport\widgetsExport;
 
-class IpTextImage extends IpText {
+class IpTextImage extends IpText
+{
 
-    public function getIp4Content(){
+    public function getIp4Content()
+    {
 
         $widgetData = array();
-        $widgetData[]  = $this->getIp4TextContent();
-        $widgetData[]  = $this->getIp4ImageContent();
+        $widgetData[] = $this->getIp4TextContent();
+        $widgetData[] = $this->getIp4ImageContent();
 
         return $widgetData;
     }
 
-    public function getIp4TextContent(){
+    public function getIp4TextContent()
+    {
 
         $widgetName = 'Text';
 
-        $elements = array (
+        $elements = array(
             'type' => $widgetName,
             'layout' => $this->getLayout()
         );
 
-        if (isset($this->data['text'])){
+        if (isset($this->data['text'])) {
             $elements['data']['text'] = $this->data['text'];
-        }else{
+        } else {
             $elements['data']['text'] = '';
         }
 
@@ -31,16 +34,17 @@ class IpTextImage extends IpText {
 
     }
 
-    public function getIp4ImageContent(){
+    public function getIp4ImageContent()
+    {
 
         $widgetName = 'Text';
 
-        $elements = array (
+        $elements = array(
             'type' => $widgetName,
             'layout' => $this->getLayout()
         );
 
-        if (isset($this->data['imageOriginal'])){
+        if (isset($this->data['imageOriginal'])) {
             self::copyImage($this->data['imageOriginal']);
         }
 
@@ -48,8 +52,6 @@ class IpTextImage extends IpText {
         return $elements;
 
     }
-
-
 
 
 }

@@ -7,6 +7,7 @@
  */
 namespace Modules\data\ImportExport\widgetsExport;
 
-class IpRichText extends IpText {
+class IpRichText extends IpText
+{
 
 }

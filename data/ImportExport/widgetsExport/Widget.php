@@ -8,39 +8,45 @@
 
 namespace Modules\data\ImportExport\widgetsExport;
 
-abstract class Widget implements iWidget {
+abstract class Widget implements iWidget
+{
 
     public $layout = '',
-           $name = '',
-           $data = array(),
-           $record = array();
+        $name = '',
+        $data = array(),
+        $record = array();
 
-    public function __construct($widgetRecord){
+    public function __construct($widgetRecord)
+    {
 
         $this->record = $widgetRecord;
-        $this->data= $widgetRecord['data'];
+        $this->data = $widgetRecord['data'];
         $this->layout = $widgetRecord['layout'];
 
     }
 
-    public function isEnabled() {
+    public function isEnabled()
+    {
         return true;
     }
 
-    public function getLayout(){
+    public function getLayout()
+    {
         return $this->layout;
     }
 
-    public function getData(){
+    public function getData()
+    {
         return $this->data;
     }
 
 
-    public function getIp4Content() {
+    public function getIp4Content()
+    {
 
         $widgetName = $this->getIp4Name();
 
-        $elements = array (
+        $elements = array(
             'type' => $widgetName,
             'layout' => $this->getLayout()
         );
@@ -48,7 +54,7 @@ abstract class Widget implements iWidget {
 
         $data = $this->getData();
 
-        if (!empty($data)){
+        if (!empty($data)) {
             $elements['data'] = $data;
         }
 
@@ -56,12 +62,13 @@ abstract class Widget implements iWidget {
     }
 
 
-    protected  static function getSelectedWidgetParams($widgetData, $paramsList){
+    protected static function getSelectedWidgetParams($widgetData, $paramsList)
+    {
 
         $params = array();
 
-        foreach ($paramsList as $paramKey){
-            if (isset($widgetData[$paramKey])){
+        foreach ($paramsList as $paramKey) {
+            if (isset($widgetData[$paramKey])) {
                 $params[$paramKey] = $widgetData[$paramKey];
             }
 
@@ -71,17 +78,22 @@ abstract class Widget implements iWidget {
 
     protected static function copyImage($imageFileName)
     {
-        $destination = \Modules\data\ImportExport\ManagerExport::getTempDir().
-            \Modules\data\ImportExport\ManagerExport::ARCHIVE_DIR.'/'.$imageFileName;
+        $destination = \Modules\data\ImportExport\ManagerExport::getTempDir() .
+            \Modules\data\ImportExport\ManagerExport::ARCHIVE_DIR . '/' . $imageFileName;
         $dirName = dirname($destination);
 
-        if (!is_dir($dirName)){
-            mkdir($dirName, null,true);
+        if (!is_dir($dirName)) {
+            try {
+                mkdir($dirName, null, true);
+            } catch (\Exception $e) {
+                throw new \Exception('Error making directory ' . $dirName . " while exporting ".self::name." widget. " . $e->getMessage());
+            }
+
         }
 
-        if (copy(BASE_DIR.$imageFileName, $destination)){
+        if (copy(BASE_DIR . $imageFileName, $destination)) {
             return true;
-        }else{
+        } else {
             return false;
         }
 

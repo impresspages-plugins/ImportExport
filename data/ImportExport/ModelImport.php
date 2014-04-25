@@ -62,7 +62,6 @@ class ModelImport
     }
 
 
-
     public static function languageExists($url)
     {
 
@@ -86,7 +85,8 @@ class ModelImport
         $blockName = null,
         $revisionId = null,
         $position = null
-    ) {
+    )
+    {
 
         global $site;
 
@@ -111,7 +111,7 @@ class ModelImport
 
         if ($widgetObject === false) {
             //TODOX service must not return Response object.
-            return 'Unknown widget "' . $widgetName . '"';
+            return 'Error: Unknown widget "' . $widgetName . '"';
         }
 
         try {
@@ -139,7 +139,7 @@ class ModelImport
             );
         } catch (Exception $e) {
             //TODOX service must not return Response object.
-            throw new Exception( 'Cannot add instance for page id ' . $pageId. '');
+            throw new Exception('Cannot add instance for page id ' . $pageId . '');
         }
 
         return $instanceId;
@@ -176,7 +176,8 @@ class ModelImport
         $associatedGroup = 'standard',
         $description = '',
         $url = ''
-    ) {
+    )
+    {
 
         global $site;
 
@@ -222,7 +223,7 @@ class ModelImport
             $queryData = array(
                 'visible' => 1
             );
-            $sql = "INSERT INTO `".DB_PREF."content_element`
+            $sql = "INSERT INTO `" . DB_PREF . "content_element`
                 (visible)
                 VALUES
                 (:visible)";
@@ -247,7 +248,7 @@ class ModelImport
             $sth->execute($queryData);
 
 
-            require_once(BASE_DIR.MODULE_DIR.'standard/languages/db.php');
+            require_once(BASE_DIR . MODULE_DIR . 'standard/languages/db.php');
 
             $queryData = array(
                 'title' => $title,
@@ -266,7 +267,6 @@ class ModelImport
 
             $sth = $dbh->prepare($sql);
             $sth->execute($queryData);
-
 
 
         }
@@ -310,14 +310,13 @@ class ModelImport
 
         $result = $sth->fetch();
 
-        if ($sth->rowCount()>0){
+        if ($sth->rowCount() > 0) {
             return $result['id'];
-        }else{
+        } else {
             return false;
         }
 
     }
-
 
 
     public static function addPage(
@@ -328,7 +327,8 @@ class ModelImport
         $url = null,
         $position = null,
         $visible = 0
-    ) {
+    )
+    {
 
         global $site; //TODO Replace $site
         $zone = $site->getZone($zoneName);
@@ -347,37 +347,39 @@ class ModelImport
         $data['createdOn'] = date("Y-m-d");
         $data['lastModified'] = date("Y-m-d");
 
-        if ($visible == "1"){
+        if ($visible == "1") {
             $data['visible'] = true; //TODO !ipGetOption('Pages.hideNewPages');
-        }else{
+        } else {
             $data['visible'] = false;
         }
 
 
-        $newPageId =  \Modules\standard\menu_management\Db::insertPage($parentPage['id'], $data);
+        $newPageId = \Modules\standard\menu_management\Db::insertPage($parentPage['id'], $data);
 
-        if (!is_null($position) && (intval($position)>0)){
+        if (!is_null($position) && (intval($position) > 0)) {
             self::setPagePosition($newPageId, $position);
         }
 
         return $newPageId;
     }
 
-    public static function setPagePosition($pageId, $position){
+    public static function setPagePosition($pageId, $position)
+    {
 
         $dbh = \Ip\Db::getConnection();
 
-        $sql = "UPDATE ".DB_PREF."content_element SET row_number=:position WHERE id=:pageId";
+        $sql = "UPDATE " . DB_PREF . "content_element SET row_number=:position WHERE id=:pageId";
         $sth = $dbh->prepare($sql);
         $parameters = Array("position" => intval($position), "pageId" => $pageId);
         $sth->execute($parameters);
     }
 
-    public static function getLanguageByUrl($url){
+    public static function getLanguageByUrl($url)
+    {
 
         $dbh = \Ip\Db::getConnection();
 
-        $sql = "SELECT * FROM ".DB_PREF."language WHERE url=:url";
+        $sql = "SELECT * FROM " . DB_PREF . "language WHERE url=:url";
         $parameters = Array("url" => $url);
 
         $sth = $dbh->prepare($sql);
@@ -388,9 +390,10 @@ class ModelImport
         return $result;
     }
 
-    public static function updateAssocModuleTo3x($moduleName){
+    public static function updateAssocModuleTo3x($moduleName)
+    {
 
-        switch ($moduleName){
+        switch ($moduleName) {
             case 'Content':
                 $moduleName3x = 'content_management';
                 break;

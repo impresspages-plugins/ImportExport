@@ -7,17 +7,20 @@
  */
 namespace Modules\data\ImportExport\widgetsExport;
 
-class IpTitle extends Widget {
+class IpTitle extends Widget
+{
 
-    public function getIp4Name() {
+    public function getIp4Name()
+    {
         return 'Heading';
     }
 
-    public function getData(){
+    public function getData()
+    {
 
-        if (isset($this->data['title'])){
+        if (isset($this->data['title'])) {
             $text = $this->data['title'];
-        }else{
+        } else {
             $text = '';
         }
 

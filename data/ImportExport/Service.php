@@ -16,7 +16,7 @@ class Service
 
         global $site;
 
-        Log::addRecord('Starting importing the site. '.$uploadedFile->getOriginalFileName(), 'info');
+        Log::addRecord('Starting importing the site. ' . $uploadedFile->getOriginalFileName(), 'info');
 
         $extractedDirName = Zip::extractZip($uploadedFile);
         $this->importSiteTree($extractedDirName);
@@ -44,10 +44,10 @@ class Service
                 foreach ($this->languagesForImporting as $language) {
 
                     $language_id = $language['id'];
-                    $language_url =  $language['url'];
+                    $language_url = $language['url'];
 
-                    $directory = BASE_DIR.
-                        'file/secure/tmp/' . $extractedDirName .'/archive/'. $language_url .
+                    $directory = BASE_DIR .
+                        'file/secure/tmp/' . $extractedDirName . '/archive/' . $language_url .
                         '_' . $zone['nameInFile'];
 
                     if (is_dir($directory)) {
@@ -78,12 +78,12 @@ class Service
         $this->zonesForImporting = Array();
         $this->languagesForImporting = Array();
 
-        $string = file_get_contents(BASE_DIR.'file/secure/tmp/' . $extractedDirName . '/archive/info.json');
+        $string = file_get_contents(BASE_DIR . 'file/secure/tmp/' . $extractedDirName . '/archive/info.json');
         $siteData = json_decode($string, true);
 
         $version = $siteData['version'];
 
-        Log::addRecord('Importing version '.$version, 'info');
+        Log::addRecord('Importing version ' . $version, 'info');
 
         $this->importZones($siteData['menuLists']);
 
@@ -93,7 +93,8 @@ class Service
         return true;
     }
 
-    private function importZones($zoneList){
+    private function importZones($zoneList)
+    {
 
         global $site;
 
@@ -153,8 +154,8 @@ class Service
 
         global $site;
 
-        foreach ($languageList as $language){
-            if (!ModelImport::languageExists($language['url'])){
+        foreach ($languageList as $language) {
+            if (!ModelImport::languageExists($language['url'])) {
 
                 self::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
 
@@ -167,7 +168,6 @@ class Service
 
         return true;
     }
-
 
 
     private function importWidgets($fileName, $pageId, $zoneName, $language)
@@ -215,13 +215,13 @@ class Service
                     //TODO Testing
                     $processWidget = false;
 
-                    if (isset($widgetValue['layout'])){
-                        $layout =  $widgetValue['layout'];
-                    }else{
-                        $layout =  'default';
+                    if (isset($widgetValue['layout'])) {
+                        $layout = $widgetValue['layout'];
+                    } else {
+                        $layout = 'default';
                     }
 
-                    if (isset($widgetValue['data'])){
+                    if (isset($widgetValue['data'])) {
 
                         $widgetData = $widgetValue['data'];
 
@@ -267,14 +267,14 @@ class Service
                             $position
                         );
 
-                        if (is_int($instanceId)){
+                        if (is_int($instanceId)) {
                             ModelImport::addWidgetContent($instanceId, $content, $layout);
-                        }else{
-                            Log::addRecord('ERROR: Failed to created an instance of ' . $widgetName . ". File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
+                        } else {
+                            Log::addRecord('ERROR: Failed to created an instance of ' . $widgetName . ". File name: " . $fileName . ", Zone name: " . $zoneName . ", Language: " . $languageDir, 'danger');
                         }
 
                     } else {
-                        Log::addRecord('ERROR: Widget ' . $widgetName . " not supported. File name: ".$fileName.", Zone name: ".$zoneName. ", Language: ".$languageDir, 'danger');
+                        Log::addRecord('ERROR: Widget ' . $widgetName . " not supported. File name: " . $fileName . ", Zone name: " . $zoneName . ", Language: " . $languageDir, 'danger');
                     }
                 }
 
@@ -322,8 +322,8 @@ class Service
                                     $visible
                                 );
                                 $this->addZonePages($directory . "/" . $file, $pageId, $recursive, $zoneName, $language);
-                            }else{
-                                Log::addRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Zone name: ".$zoneName);
+                            } else {
+                                Log::addRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Zone name: " . $zoneName);
                             }
                         }
 
@@ -363,10 +363,10 @@ class Service
     }
 
 
+    public function addLanguage($code, $url, $d_long = '', $d_short = '', $visible = true, $text_direction = 'ltr')
+    {
 
-    public function addLanguage($code, $url, $d_long = '', $d_short = '', $visible = true, $text_direction='ltr'){
-
-        if (($code!='') && ($url!='')){
+        if (($code != '') && ($url != '')) {
 
             $dbh = \Ip\Db::getConnection();
 
@@ -379,7 +379,7 @@ class Service
             $data['text_direction'] = $text_direction;
 
 
-            $sql = "INSERT INTO `".DB_PREF."language`
+            $sql = "INSERT INTO `" . DB_PREF . "language`
                 (code, url, d_long, d_short, visible, text_direction)
                 VALUES
                 (:code, :url, :d_long, :d_short, :visible, :text_direction)";
@@ -393,25 +393,24 @@ class Service
 //TODO            $this->afterInsert($id);
 
             return true;
-        }else{
+        } else {
             trigger_error("Can't create language. Missing URL or language code.");
         }
     }
 
-    public function startExport(){
+    public function startExport()
+    {
 
         try {
             $response['results'] = ManagerExport::exportSiteTree();
             $response['status'] = "success";
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::addRecord($e);
             $response['results'] = $this->importLog;
             $response['status'] = "error";
         }
         return $response;
     }
-
-
 
 
 }

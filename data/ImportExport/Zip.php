@@ -12,12 +12,12 @@ class Zip
 
         $cnt = '';
 
-        while (file_exists($path . '/' . $archiveFileName.$cnt.'.zip')){
+        while (file_exists($path . '/' . $archiveFileName . $cnt . '.zip')) {
             $cnt++;
         }
 
 
-        if ($cnt){
+        if ($cnt) {
             $archiveFileName .= $cnt;
         }
 
@@ -25,7 +25,7 @@ class Zip
 
         $archive = new \PclZip($path . '/' . $archiveFileName);
 
-        Log::addRecord( 'Copying to archive');
+        Log::addRecord('Copying to archive');
         $v_dir = $path . $archiveDir; // or dirname(__FILE__);
         $v_list = $archive->add($v_dir, PCLZIP_OPT_REMOVE_PATH, $path);
         return $archiveFileName;

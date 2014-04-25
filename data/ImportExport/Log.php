@@ -9,17 +9,19 @@
 namespace Modules\data\ImportExport;
 
 
-class Log {
+class Log
+{
 
     protected static $log = array();
 
-    public static  function addRecord($msg, $status = 'warning')
+    public static function addRecord($msg, $status = 'warning')
     {
         self::$log[] = Array('message' => $msg, 'status' => $status);
 
     }
 
-    public static function getLog(){
+    public static function getLog()
+    {
 
         $allLogRecords = self::$log;
 

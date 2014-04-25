@@ -7,21 +7,24 @@
  */
 namespace Modules\data\ImportExport\widgetsExport;
 
-class IpImageGallery extends Widget {
+class IpImageGallery extends Widget
+{
 
-    public function getIp4Name() {
+    public function getIp4Name()
+    {
         return 'Gallery';
     }
 
-    public function getData(){
+    public function getData()
+    {
 
 
         $images = array();
 
-        if (isset($this->data['images'])){
-            foreach ($this->data['images'] as $image){
+        if (isset($this->data['images'])) {
+            foreach ($this->data['images'] as $image) {
 
-                if (isset($image['imageOriginal'])){
+                if (isset($image['imageOriginal'])) {
                     self::copyImage($image['imageOriginal']);
                 }
 

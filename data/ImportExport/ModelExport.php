@@ -9,7 +9,8 @@
 namespace Modules\data\ImportExport;
 
 
-class ModelExport {
+class ModelExport
+{
 
     public static function getFormExport()
     {
@@ -62,14 +63,16 @@ class ModelExport {
         return $form;
     }
 
-    public static function getZones(){
+    public static function getZones()
+    {
         global $site;
         $zones = $site->getZones();
         return self::getExportZones($zones);
 
     }
 
-    public static function getLanguages(){
+    public static function getLanguages()
+    {
         global $site;
         $languages = $site->getLanguages();
         return self::getExportLanguages($languages);
@@ -113,11 +116,12 @@ class ModelExport {
         return $zoneList;
     }
 
-       /**
+    /**
      * Returns widget elements
      * @param $pageId
      */
-    public function getElements($zoneName, $pageId){
+    public function getElements($zoneName, $pageId)
+    {
 
         global $site;
 
@@ -127,20 +131,20 @@ class ModelExport {
         $widgetData = array();
         foreach ($widgetRecords as $widgetRecord) {
 
-            try{
+            try {
 
                 $widget = self::getWidget($widgetRecord);
-                if (!$widget->isEnabled()){
-                    throw new \Exception('ERROR: Widget '. $widgetRecord['name'].' not supported');
+                if (!$widget->isEnabled()) {
+                    throw new \Exception('ERROR: Widget ' . $widgetRecord['name'] . ' not supported');
                 }
 
                 $widgetContent = $widget->getIp4Content();
 
-                foreach ($widgetContent as $widgetContentItem){
+                foreach ($widgetContent as $widgetContentItem) {
                     $widgetData[] = $widgetContentItem;
                 }
 
-            }catch (\Exception $e){
+            } catch (\Exception $e) {
                 Log::addRecord($e->getMessage());
             }
         }
@@ -148,31 +152,33 @@ class ModelExport {
         return $widgetData;
     }
 
-    public static function getWidget($widgetRecord) {
+    public static function getWidget($widgetRecord)
+    {
 
 
         $widgetName = $widgetRecord['name'];
 
-        $widgetClassName = "\\Modules\\data\\ImportExport\\widgetsExport\\".$widgetName;
+        $widgetClassName = "\\Modules\\data\\ImportExport\\widgetsExport\\" . $widgetName;
 
         if (!class_exists($widgetClassName)) {
-            throw new \Exception("Unknown widget class ".$widgetClassName);
+            throw new \Exception("Warning: skipping non-exportable widget " . $widgetClassName);
         }
 
-        try{
+        try {
             $widget = new $widgetClassName($widgetRecord);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             throw new \Exception($e);
         }
 
         return $widget;
     }
 
-    public static function getPageSettings($pageId) {
+    public static function getPageSettings($pageId)
+    {
         global $site;
 
 
-        $retval =  \Modules\standard\menu_management\Db::getPage($pageId); // TODO copy only some properties from a list below
+        $retval = \Modules\standard\menu_management\Db::getPage($pageId); // TODO copy only some properties from a list below
 
         return $retval;
     }

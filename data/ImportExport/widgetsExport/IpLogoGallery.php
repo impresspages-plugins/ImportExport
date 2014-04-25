@@ -7,6 +7,7 @@
  */
 namespace Modules\data\ImportExport\widgetsExport;
 
-class IpLogoGallery extends IpImageGallery {
+class IpLogoGallery extends IpImageGallery
+{
 
 }
