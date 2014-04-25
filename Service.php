@@ -158,7 +158,6 @@ class Service
     }
 
 
-
     private function importWidgets($fileName, $pageId, $menuName, $language)
     {
 
@@ -250,10 +249,40 @@ class Service
                             $processWidget = true;
                             break;
 
-                        case 'Gallery':
-                            foreach ($widgetData['images'] as $image){
+                        case 'File':
 
-                                $newImage= array();
+                            foreach ($widgetData['files'] as $file) {
+
+                                $newFile = array();
+
+                                if (isset($file['imageOriginal'])) {
+
+                                    // Create a file with a  new name if a file already exists
+
+                                    $newFileName = $this->createFileName($file['fileName']);
+
+
+                                    $this->copyFileToRepository($file['fileName'], $newFileName);
+
+                                    $newFile['fileName'] = $newFileName;
+
+                                    if (isset($file['title'])) {
+                                        $newFile['title'] = $file['title'];
+                                    }
+
+                                }
+                                $content['files'][] = $newFile;
+                            }
+
+                            $processWidget = true;
+
+                            break;
+
+
+                        case 'Gallery':
+                            foreach ($widgetData['images'] as $image) {
+
+                                $newImage = array();
 
                                 if (isset($image['imageOriginal'])) {
 
@@ -292,9 +321,9 @@ class Service
                         case 'Heading':
 
                             $content['title'] = $widgetData['title'];
-                            if (isset($widgetData['level'])){
+                            if (isset($widgetData['level'])) {
                                 $content['level'] = $widgetData['level'];
-                            }else{
+                            } else {
                                 $content['level'] = 1;
                             }
 
@@ -371,10 +400,10 @@ class Service
     private function copyFileToRepository($fileNameInArchive, $newFileName)
     {
 
-        $fileFromArchive = ipFile('file/secure/tmp/'.$this->archiveDir.'/archive/'.$fileNameInArchive);
-        if (copy($fileFromArchive , ipFile('file/repository/'.$newFileName))){
+        $fileFromArchive = ipFile('file/secure/tmp/' . $this->archiveDir . '/archive/' . $fileNameInArchive);
+        if (copy($fileFromArchive, ipFile('file/repository/' . $newFileName))) {
             return true;
-        }else{
+        } else {
             return false;
         }
 
