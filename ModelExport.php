@@ -70,27 +70,32 @@ class ModelExport
     }
 
 
-    public static function getExportMenus($zones)
+    public static function getExportMenus($menuLists)
     {
 
-        $zoneList = Array();
+        $menuForExport = Array();
 
-        foreach ($zones as $zone) {
-            $item['name'] = $zone->getName();
-            $item['title'] = $zone->getTitle();
-            $item['url'] = $zone->getUrl();
-            $item['description'] = $zone->getDescription();
-            $zoneList[] = $item;
+        foreach ($menuLists as $languageCode=>$menuList) {
+            foreach($menuList as $menuItem)
+            {
+                var_dump($menuItem);
+                $item['name'] = $menuItem['alias'];
+                $item['title'] = $menuItem['title'];
+                $item['url'] = $menuItem['urlPath'];
+                $item['description'] = $menuItem['description'];
+                $item['languageCode'] = $menuItem['languageCode'];
+                $menuForExport[] = $item;
+            }
         }
 
-        return $zoneList;
+        return $menuForExport;
     }
 
     /**
      * Returns widget elements
      * @param $pageId
      */
-    public function getElements($zoneName, $pageId)
+    public function getElements($element)
     {
 
         global $site;

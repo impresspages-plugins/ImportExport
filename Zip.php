@@ -27,7 +27,7 @@ class Zip
 
         Log::addRecord('Copying to archive');
         $v_dir = $path . $archiveDir; // or dirname(__FILE__);
-        $v_list = $archive->add($v_dir, PCLZIP_OPT_REMOVE_PATH, $path);
+        $archive->add($v_dir, PCLZIP_OPT_REMOVE_PATH, $path);
         return $archiveFileName;
     }
 
