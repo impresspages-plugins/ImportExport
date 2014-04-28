@@ -4,6 +4,33 @@ namespace Plugin\ImportExport;
 
 class Zip
 {
+
+    public static function zip($path, $archiveDir, $archiveFileName)
+    {
+
+        require_once(__DIR__ . '/lib/pclzip.lib.php');
+
+        $cnt = '';
+
+        while (file_exists($path . '/' . $archiveFileName . $cnt . '.zip')) {
+            $cnt++;
+        }
+
+
+        if ($cnt) {
+            $archiveFileName .= $cnt;
+        }
+
+        $archiveFileName .= '.zip';
+
+        $archive = new \PclZip($path . '/' . $archiveFileName);
+
+        Log::addRecord('Copying to archive');
+        $v_dir = $path . $archiveDir; // or dirname(__FILE__);
+        $v_list = $archive->add($v_dir, PCLZIP_OPT_REMOVE_PATH, $path);
+        return $archiveFileName;
+    }
+
     public static function extractZip($file)
     {
         $extractSubDir = false;

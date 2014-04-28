@@ -27,15 +27,6 @@ class ModelImport
 
         $field = new \Ip\Form\Field\Hidden(
             array(
-                'name' => 'action',
-                'defaultValue' => 'import'
-            )
-        );
-
-        $form->addField($field);
-
-        $field = new \Ip\Form\Field\Hidden(
-            array(
                 'name' => 'aa',
                 'value' => 'ImportExport.import'
             ));

@@ -513,5 +513,18 @@ class Service
         return $array_items;
     }
 
+    public function startExport()
+    {
+        try {
+            $response['results'] = ManagerExport::exportSiteTree();
+            $response['status'] = "success";
+        } catch (\Exception $e) {
+            Log::addRecord($e);
+            $response['results'] = Log::getLog();
+            $response['status'] = "error";
+        }
+        return $response;
+    }
+
 
 }
