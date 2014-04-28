@@ -20,8 +20,8 @@ class ManagerExport
 
         global $site;
 
-        $menuLists = self::getTopLevelMenus();
         $languages = self::getLanguages();
+        $menuLists = self::getTopLevelMenus($languages);
 
         self::saveSiteSettings($menuLists, $languages);
 
@@ -29,7 +29,7 @@ class ManagerExport
 
 
             $language_id = $language->getId();
-            $language_url = $language->getUrl();
+            $language_url = $language->getUrlPath();
 
             foreach ($menuLists as $menuList) {
 
@@ -72,13 +72,13 @@ class ManagerExport
             throw ($e);
         }
 
-        return BASE_URL . 'file/tmp/data/export/' . $archiveFileName;
+        return ipFile('file/tmp/data/export/' . $archiveFileName);
 
     }
 
-    private static function getTopLevelMenus()
+    private static function getTopLevelMenus($languageCode)
     {
-        $menus = ipContent()->getPageMenu();
+        $menus = $menu = \Ip\Internal\Pages\Service::getMenus($languageCode);
         return $menus;
     }
 
@@ -131,7 +131,7 @@ class ManagerExport
 
     public static function getTempDir()
     {
-        return BASE_DIR . FILE_DIR . self::PLUGIN_TEMP_DIR;
+        return ipFile(self::PLUGIN_TEMP_DIR);
     }
 
 

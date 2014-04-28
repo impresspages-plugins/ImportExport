@@ -58,12 +58,11 @@ class ModelExport
         foreach ($languages as $language) {
 
             $languageRecord['code'] = $language->getCode();
-            $languageRecord['d_short'] = $language->getShortDescription();
-            $languageRecord['d_long'] = $language->getLongDescription();
-            $languageRecord['url'] = $language->getUrl();
+            $languageRecord['d_long'] = $language->getTitle();
+            $languageRecord['d_short'] = $language->getAbbreviation();
+            $languageRecord['url'] = $language->getUrlPath();
 //            $languageRecord['text_direction'] = $language->getTextDirection();
-            $languageRecord['visible'] = $language->getVisible();
-
+            $languageRecord['visible'] = $language->isVisible();
             $languageList[] = $languageRecord;
         }
 
