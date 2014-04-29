@@ -183,7 +183,7 @@ class ManagerExport
                 $content['settings']['position'] = $position;
                 $widgetData = $model->getElements($pageId);
 
-                if (!empty($widgetData)) {
+                if ($widgetData) {
                     $content['widgets'] = $widgetData;
                 }
 

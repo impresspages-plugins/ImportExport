@@ -150,15 +150,10 @@ class ModelExport
 
                 try {
 
-                    $widget = self::getWidget($widgetRecord);
-                    if (!$widget->isEnabled()) {
-                        throw new \Exception('ERROR: Widget ' . $widgetRecord['name'] . ' not supported');
-                    }
+                    $widgetFiltered = self::getWidget($widgetRecord);
 
-                    $widgetContent = $widget->getIp4Content();
-
-                    foreach ($widgetContent as $widgetContentItem) {
-                        $widgetData[] = $widgetContentItem;
+                    if ($widgetFiltered){
+                        $widgetData[] = $widgetFiltered;
                     }
 
                 } catch (\Exception $e) {
@@ -166,25 +161,30 @@ class ModelExport
                 }
             }
         }
+
         return $widgetData;
     }
 
     public static function getWidget($widgetRecord)
     {
 
+        if (isset($widgetRecord['name'])){
 
-        $widgetName = $widgetRecord['name'];
+            $widget['type'] = $widgetRecord['name'];
 
-        $widgetClassName = "\\Modules\\data\\ImportExport\\widgetsExport\\" . $widgetName;
+            if (isset($widgetRecord['skin'])){
+                $widget['layout'] = $widgetRecord['skin'];
+            }
 
-        if (!class_exists($widgetClassName)) {
-            throw new \Exception("Warning: skipping non-exportable widget " . $widgetClassName);
-        }
 
-        try {
-            $widget = new $widgetClassName($widgetRecord);
-        } catch (\Exception $e) {
-            throw new \Exception($e);
+            if (isset($widgetRecord['data'])){
+                $widget['data'] = json_decode($widgetRecord['data']);
+            }else{
+                $widget = false;
+            }
+
+        }else{
+            $widget = false;
         }
 
         return $widget;
