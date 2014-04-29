@@ -10,7 +10,7 @@ namespace Plugin\ImportExport;
 class ManagerExport
 {
 
-    const PLUGIN_TEMP_DIR = 'tmp/data/export/',
+    const PLUGIN_TEMP_DIR = 'file/tmp/Export/',
         ARCHIVE_DIR = 'archive',
         ZONE_FILE = 'info',
         VERSION = '4';
@@ -21,41 +21,37 @@ class ManagerExport
         global $site;
 
         $languages = self::getLanguages();
-        $menuLists = self::getTopLevelMenus($languages);
+
+        $menuLists = null;
+        foreach ($languages as $language){
+            $menuLists[$language->getCode()] = self::getTopLevelMenus($language->getCode());
+        }
 
         self::saveSiteSettings($menuLists, $languages);
 
-        foreach ($languages as $language) {
+        foreach ($menuLists as $languageCode=>$menuList) {
 
+//            var_dump($menuList);
 
-            $language_id = $language->getId();
-            $language_url = $language->getUrlPath();
+            foreach ($menuList as $menuItem){
 
-            foreach ($menuLists as $menuList) {
+                $menuAlias = $menuItem['alias'];
 
-                Log::addRecord("Processing menu " . $menuList->getName() . ' for LANGUAGE url:' . $language_url);
+                Log::addRecord("Processing menu " . $menuItem['alias'] . ' for language code:' . $languageCode);
 
-                if ($menuList->getAssociatedModule() == 'content_management') {
-
-                    $zoneName = $menuList->getName();
-
-                    try {
-                        self::getPages(
-                            $menuList,
-                            $language_id,
-                            1000,
-                            null,
-                            1,
-                            self::getTempDir() . self::ARCHIVE_DIR . '/' . $language_url . "_" . $zoneName
-                        );
-                    } catch (Exception $e) {
-                        throw \Exception("ERROR. Error while exporting site tree " . $e);
-                    }
-
+                try {
+                    self::getPages(
+                        $menuItem,
+                        self::getTempDir() . self::ARCHIVE_DIR . '/' . $languageCode . "_" . $menuAlias
+                    );
+                } catch (Exception $e) {
+                    throw \Exception("ERROR. Error while exporting site tree " . $e);
                 }
             }
 
+
         }
+
 
         $zipFileName = self::setZipFileName();
 
@@ -78,7 +74,7 @@ class ManagerExport
 
     private static function getTopLevelMenus($languageCode)
     {
-        $menus = $menu = \Ip\Internal\Pages\Service::getMenus($languageCode);
+        $menus = \Ip\Internal\Pages\Service::getMenus($languageCode);
         return $menus;
     }
 
@@ -102,10 +98,8 @@ class ManagerExport
         return "archive_" . date('Y-m-d_Hi');
     }
 
-    private static function saveSiteSettings($zones, $languages)
+    private static function saveSiteSettings($menuLists, $languages)
     {
-
-        global $site;
 
         $path = self::getTempDir() . self::ARCHIVE_DIR;
 
@@ -118,7 +112,7 @@ class ManagerExport
         $content = Array();
 
         $content['version'] = self::VERSION;
-        $content['menuLists'] = ModelExport::getExportMenus($zones);
+        $content['menuLists'] = ModelExport::getExportMenus($menuLists);
         $content['languages'] = ModelExport::getLanguages($languages);
 
         $fh = fopen($path . '/' . $saveFileName . '.json', 'w');
@@ -135,82 +129,103 @@ class ManagerExport
     }
 
 
-    private static function getPages($zone, $languageId, $maxDepth = 1000, $parentId = null, $curDepth = 1, $path)
+
+    private static function getPages($menu, $path)
     {
-        global $site;
-        $pages = array();
-        if ($curDepth <= $maxDepth) {
+        $tmpElements = \Ip\Menu\Helper::getMenuItems($menu['alias'], 1, 1000);
 
-            $tmpElements = $zone->getElements($languageId, $parentId, 0, null, true);
+        self::exportPages($tmpElements, $menu['alias'], 1);
+    }
 
+    private static function exportPages($pages, $path, $exportedPageId){
+        foreach ($pages as $key=>$page){
+            /** @var \Ip\Menu\Item $page */
+            $exportedPageId++;
+            $children = $page->getChildren();
+            if (!is_null($children)){
+                self::exportPages($children, $path.'/'.str_pad($exportedPageId, 4, '0', STR_PAD_LEFT), $exportedPageId);
+            }
 
-            foreach ($tmpElements as $key => $element) {
+//TODO           $path . "/" . str_pad($key, 4, '0', STR_PAD_LEFT) . '_' . $dirName;
 
-                if ($element->getType() == 'default') {
-                    $pages[] = $element;
+            self::saveFile($page, $path.'/'.str_pad($exportedPageId, 4, '0', STR_PAD_LEFT), $exportedPageId, $exportedPageId);
+        }
+
+    }
+//            $tmpElements = $menu->getElements($languageId, $parentId, 0, null, true);
+
+    private static function saveFile($menuItem, $path, $position)
+    {
+
+        /** @var \Ip\Menu\Item $page */
+        $page = $menuItem->getTarget();
+
+        // where alias = 'name', langugage, isDeleted
+
+        $list = ipDb()->selectAll('page', '*', array('alias'=>$page['alias'], 'isDeleted'=>0));
+
+        $pages = \Ip\Page::createList($list);
+
+        foreach ($pages as $page){
+    //        var_dump($page);
+            /** @var $page \Ip\Page */
+            $pageId = $page->getId();
+
+            $model = new ModelExport();
+            try {
+
+                // Add page button, title, visibility, meta title, meta keywords, meta description
+                // URL, redirect type, redirect to external page URL and RSS settings.
+                $content = Array();
+                $settings = self::getPageSettings($pageId);
+//            var_dump($settings);
+                $content['settings'] = $settings;
+                $content['settings']['position'] = $position;
+                $widgetData = $model->getElements($pageId);
+
+                if (!empty($widgetData)) {
+                    $content['widgets'] = $widgetData;
                 }
-                $dirName = $element->getUrl();
 
-                $pages = array_merge(
-                    $pages,
-                    self::getPages(
-                        $zone,
-                        $languageId,
-                        $maxDepth,
-                        $element->getId(),
-                        $curDepth + 1,
-                        $path . "/" . str_pad($key, 4, '0', STR_PAD_LEFT) . '_' . $dirName
-                    )
-                );
+            } catch (\Exception $e) {
+                Log::addRecord("Export error when exporting to " . $path . " Directory: " . $position . " - " . $e->getMessage());
+            }
 
-                $model = new ModelExport();
+//            var_dump($content);
+
+            if (!empty($content)) {
                 try {
-
-                    // Add page button, title, visibility, meta title, meta keywords, meta description
-                    // URL, redirect type, redirect to external page URL and RSS settings.
-                    $content = Array();
-                    $content['settings'] = self::getPageSettings($element->getId());
-                    $content['settings']['position'] = $key;
-                    $widgetData = $model->getElements($zone->getName(), $element->getId());
-
-                    if (!is_null($widgetData)) {
-                        $content['widgets'] = $widgetData;
-                    }
-
+                    self::savePages($content, $path, str_pad($position, 4, '0', STR_PAD_LEFT));
                 } catch (\Exception $e) {
-                    Log::addRecord("Export error when exporting to " . $path . " Directory: " . $dirName . " - " . $e->getMessage());
-                }
-
-
-                if (isset($content)) {
-                    try {
-                        self::savePages($content, $path, str_pad($key, 4, '0', STR_PAD_LEFT) . '_' . $dirName);
-                    } catch (\Exception $e) {
-                        Log::addRecord("Export error when saving to " . $path . " Directory: " . $dirName . " - " . $e->getMessage());
-                    }
+                    Log::addRecord("Export error when saving to " . $path . " File: " . $position . " - " . $e->getMessage());
                 }
             }
+
         }
-        return $pages;
     }
 
     private static function getPageSettings($pageId)
     {
         $allSettings = ModelExport::getPageSettings($pageId);
 
+        /** @var $allSettings \Ip\Page */
+
+        //$allSettings->buttontitle?
+
+
         $settings = array(
-            'id' => $allSettings['id'],
-            'parent' => $allSettings['parent'],
-            'button_title' => $allSettings['button_title'],
-            'visible' => $allSettings['visible'],
-            'page_title' => $allSettings['page_title'],
-            'keywords' => $allSettings['keywords'],
-            'description' => $allSettings['description'],
-            'url' => $allSettings['url'],
-            'last_modified' => $allSettings['last_modified'],
-            'created_on' => $allSettings['created_on'],
-            'type' => $allSettings['type'],
-            'redirect_url' => $allSettings['redirect_url']
+            'id' => $allSettings->getId(),
+            'parent' => $allSettings->getParentId(),
+            'button_title' => $allSettings->getAlias(),
+            'visible' => $allSettings->isVisible(),
+            'page_title' => $allSettings->getTitle(),
+            'keywords' => $allSettings->getKeywords(),
+            'description' => $allSettings->getDescription(),
+            'url' => $allSettings->getUrlPath(),
+            'last_modified' => $allSettings->getUpdatedAt(),
+            'created_on' => $allSettings->getCreatedAt(),
+            'type' => $allSettings->getType(),
+            'redirect_url' => $allSettings->getRedirectUrl()
         );
 
 
@@ -222,11 +237,15 @@ class ManagerExport
 
         $path = preg_replace('/[^\/a-zA-Z0-9_-]$/s', '', $path);
         $saveFileName = preg_replace('/[^a-zA-Z0-9_-]$/s', '', $saveFileName);
-        if (!file_exists($path)) {
-            mkdir($path, 0777, true);
+        $saveFullPath = ipFile(self::PLUGIN_TEMP_DIR.self::ARCHIVE_DIR.'/'.$path) ;
+
+        if (!file_exists($saveFullPath)) {
+            mkdir($saveFullPath, 0777, true);
         }
 
-        $fh = fopen($path . '/' . $saveFileName . '.json', 'w');
+
+
+        $fh = fopen($saveFullPath. '/' . $saveFileName . '.json', 'w');
 
         fwrite($fh, json_encode($content));
 
