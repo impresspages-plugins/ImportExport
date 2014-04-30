@@ -118,7 +118,6 @@ class ModelExport
     public function getElements($pageId)
     {
 
-        $page = ipContent()->getPage($pageId);
         /** @var \Ip\Internal\Revision $publishedRevision */
         $publishedRevisionId = self::getRevisionId($pageId);
 
@@ -187,7 +186,7 @@ class ModelExport
                         self::copyWidgetGalleryFiles($widget['data']);
                         break;
                     case 'File':
-                        //TODOX implement file exporting
+                        self::copyFileWidgetFiles($widget['data']);
                         break;
                 }
             } else {
@@ -200,6 +199,7 @@ class ModelExport
 
         return $widget;
     }
+
 
     public static function copyWidgetFile($widgetFile)
     {
@@ -230,7 +230,17 @@ class ModelExport
 
     }
 
-    public static function copyWidgetGalleryFiles($widgetData)
+
+    private static function copyFileWidgetFiles($widgetData)
+    {
+        if (!empty($widgetData['files'])) {
+            foreach ($widgetData['files'] as $file) {
+                self::copyWidgetFile($file['fileName']);
+            }
+        }
+    }
+
+    private static function copyWidgetGalleryFiles($widgetData)
     {
 
         if (!empty($widgetData['images'])) {
