@@ -20,7 +20,7 @@ class ModelImport
 
         $field = new \Ip\Form\Field\Submit(
             array(
-                'value' => 'Import site widget content from file'
+                'value' => 'Import site content from ZIP file'
             ));
         $field->addClass('ipsImportExportSubmit');
         $form->addField($field);
