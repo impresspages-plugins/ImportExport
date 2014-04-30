@@ -152,7 +152,7 @@ class ModelExport
 
                     $widgetFiltered = self::getWidget($widgetRecord);
 
-                    if ($widgetFiltered){
+                    if ($widgetFiltered) {
                         $widgetData[] = $widgetFiltered;
                     }
 
@@ -168,71 +168,73 @@ class ModelExport
     public static function getWidget($widgetRecord)
     {
 
-        if (isset($widgetRecord['name'])){
+        if (isset($widgetRecord['name'])) {
 
             $widget['type'] = $widgetRecord['name'];
 
-            if (isset($widgetRecord['skin'])){
+            if (isset($widgetRecord['skin'])) {
                 $widget['layout'] = $widgetRecord['skin'];
             }
 
 
-            if (isset($widgetRecord['data'])){
+            if (isset($widgetRecord['data'])) {
                 $widget['data'] = json_decode($widgetRecord['data'], true);
-                switch ($widget['type']){
+                switch ($widget['type']) {
                     case 'Image':
                         self::copyWidgetFile($widget['data']['imageOriginal']);
-                    break;
+                        break;
                     case 'Gallery':
                         self::copyWidgetGalleryFiles($widget['data']);
-                    break;
+                        break;
                     case 'File':
                         //TODOX implement file exporting
-                    break;
+                        break;
                 }
-            }else{
+            } else {
                 $widget = false;
             }
 
-        }else{
+        } else {
             $widget = false;
         }
 
         return $widget;
     }
 
-    public static function copyWidgetFile($widgetFile){
+    public static function copyWidgetFile($widgetFile)
+    {
 
-        if (isset($widgetFile)){
+        if (isset($widgetFile)) {
 
             $originalFileName = esc($widgetFile);
-            $originalPathName = ipFile('file/repository/'.$originalFileName);
-            if (file_exists($originalPathName)){
+            $originalPathName = ipFile('file/repository/' . $originalFileName);
+            if (file_exists($originalPathName)) {
 
-                $archiveRepoPath = ManagerExport::getTempDir().ManagerExport::ARCHIVE_DIR.'/file/';
-                if (!is_dir($archiveRepoPath)){
+                $archiveRepoPath = ManagerExport::getTempDir() . ManagerExport::ARCHIVE_DIR . '/file/';
+                if (!is_dir($archiveRepoPath)) {
                     mkdir($archiveRepoPath, null, true);
                 }
 
-                $archiveRepoPathName = $archiveRepoPath.'/'.$originalFileName;
+                $archiveRepoPathName = $archiveRepoPath . '/' . $originalFileName;
                 copy($originalPathName, $archiveRepoPathName);
 
                 return $originalFileName;
-            }else{
-                Log::addRecord('File '.esc($widgetFile).' does not exist in repository', 'error');
+            } else {
+                Log::addRecord('File ' . esc($widgetFile) . ' does not exist in repository', 'error');
             }
 
-        }else{
+        } else {
             Log::addRecord('Widget image file is not set', 'error');
             return false;
         }
 
     }
 
-    public static function copyWidgetGalleryFiles($widgetData){
+    public static function copyWidgetGalleryFiles($widgetData)
+    {
 
-        if (!empty($widgetData['images'])){
-            foreach ($widgetData['images'] as $image){
+        if (!empty($widgetData['images'])) {
+            foreach ($widgetData['images'] as $image) {
                 self::copyWidgetFile($image['imageOriginal']);
             }
 
@@ -240,10 +242,6 @@ class ModelExport
 
     }
 
-    public static function copyWidgetFiles($widgetData){
-
-
-    }
 
     public static function getPageSettings($pageId)
     {

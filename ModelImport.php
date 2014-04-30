@@ -40,9 +40,9 @@ class ModelImport
 
         $ra = ipContent()->getLanguages();
 
-        foreach ($ra as $language){
-            if ($language->getUrlPath() == $url){
-                 return $language->getId();
+        foreach ($ra as $language) {
+            if ($language->getUrlPath() == $url) {
+                return $language->getId();
             }
         }
 
@@ -54,9 +54,9 @@ class ModelImport
     {
 
 //        $ra =  \Ip\Module\Languages\Db::getLanguageByUrl($url);
-        if (self::getLanguageIdByUrl($url)){
+        if (self::getLanguageIdByUrl($url)) {
             return true;
-        }else{
+        } else {
             return false;
         }
 

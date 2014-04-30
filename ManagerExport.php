@@ -68,14 +68,8 @@ class ManagerExport
             throw ($e);
         }
 
-        return self::getTempDir() . $archiveFileName;
+        return ipFileUrl(self::PLUGIN_TEMP_DIR . $archiveFileName);
 
-    }
-
-    private static function getTopLevelMenus($languageCode)
-    {
-        $menus = \Ip\Internal\Pages\Service::getMenus($languageCode);
-        return $menus;
     }
 
     private static function getLanguages()
@@ -84,20 +78,13 @@ class ManagerExport
         return $languages;
     }
 
-    // By nbari at dalmp dot com. http://www.php.net/manual/en/function.rmdir.php
-    private static function delTree($dir)
+    private static function getTopLevelMenus($languageCode)
     {
-        $files = array_diff(scandir($dir), array('.', '..'));
-        foreach ($files as $file) {
-            (is_dir("$dir/$file")) ? self::delTree("$dir/$file") : unlink("$dir/$file");
-        }
-        return rmdir($dir);
+        $menus = \Ip\Internal\Pages\Service::getMenus($languageCode);
+        return $menus;
     }
 
-    private static function setZipFileName()
-    {
-        return "archive_" . date('Y-m-d_Hi');
-    }
+    // By nbari at dalmp dot com. http://www.php.net/manual/en/function.rmdir.php
 
     private static function saveSiteSettings($menuLists, $languages)
     {
@@ -123,12 +110,10 @@ class ManagerExport
         fclose($fh);
     }
 
-
     public static function getTempDir()
     {
         return ipFile(self::PLUGIN_TEMP_DIR);
     }
-
 
     private static function exportMenuPages($menu, $path)
     {
@@ -153,8 +138,6 @@ class ManagerExport
         }
 
     }
-
-//            $tmpElements = $menu->getElements($languageId, $parentId, 0, null, true);
 
     private static function saveFile($page, $path, $position)
     {
@@ -222,6 +205,8 @@ class ManagerExport
         return $settings;
     }
 
+//            $tmpElements = $menu->getElements($languageId, $parentId, 0, null, true);
+
     private static function savePages($content, $path, $saveFileName)
     {
 
@@ -242,6 +227,20 @@ class ManagerExport
 
         return true;
 
+    }
+
+    private static function setZipFileName()
+    {
+        return "archive_" . date('Y-m-d_Hi');
+    }
+
+    private static function delTree($dir)
+    {
+        $files = array_diff(scandir($dir), array('.', '..'));
+        foreach ($files as $file) {
+            (is_dir("$dir/$file")) ? self::delTree("$dir/$file") : unlink("$dir/$file");
+        }
+        return rmdir($dir);
     }
 
 

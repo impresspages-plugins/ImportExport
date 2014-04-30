@@ -13,14 +13,15 @@ class AdminController extends \Ip\Controller
         $formImport = ModelImport::getForm();
         $formExport = ModelExport::getForm();
 
-        $data = array (
+        $data = array(
             'formImport' => $formImport,
             'formExport' => $formExport,
         );
 
         $view = ipView('view/index.php', $data);
 
-        ipAddJs('assets/importExport.js');
+        ipAddJs('assets/import.js');
+        ipAddJs('assets/export.js');
 
         return $view->render();
     }
@@ -34,12 +35,12 @@ class AdminController extends \Ip\Controller
 
         $service = New Service();
 
-        foreach ($files as $file){
+        foreach ($files as $file) {
             $service->startImport($file);
         }
 
-        $response['log'] =   Log::getLog();
-        $response['status'] =   'success';
+        $response['log'] = Log::getLog();
+        $response['status'] = 'success';
 
         return new \Ip\Response\Json($response);
     }

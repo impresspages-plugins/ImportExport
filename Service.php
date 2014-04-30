@@ -376,7 +376,7 @@ class Service
 
 
                         case 'Gallery':
-                            if (isset($widgetData['images'])){
+                            if (isset($widgetData['images'])) {
                                 foreach ($widgetData['images'] as $image) {
 
                                     $newImage = array();
@@ -528,10 +528,10 @@ class Service
 
         $newFileNamePath = ipFile('file/repository/' . $newFileName);
 
-        if (file_exists($fileFromArchive)){
+        if (file_exists($fileFromArchive)) {
             copy($fileFromArchive, $newFileNamePath);
-        }else{
-            Log::addRecord('ERROR. Error while copying file ' . $fileFromArchive.' to '.$newFileNamePath, 'error');
+        } else {
+            Log::addRecord('Warbubg. File exists ' . $fileFromArchive . ' to ' . $newFileNamePath, 'warning');
             //TODOX throw exception
         }
 
