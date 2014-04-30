@@ -85,6 +85,30 @@ class Service
         return true;
     }
 
+    private function importLanguages($languageList)
+    {
+
+        foreach ($languageList as $language) {
+
+            if (!ipContent()->getLanguageByCode($language['code'])) {
+
+                $languageId = ipContent()->addLanguage($language['d_long'], $language['d_short'], $language['code'], $language['url'], true);
+
+//                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
+
+            } else {
+                $languageId = ipContent()->getLanguageByCode($language['code'])->getId();
+
+            }
+            //TODO
+
+
+            $this->languagesForImporting[] = ipContent()->getLanguage($languageId);;
+        }
+
+        return true;
+    }
+
     private function importMenus($menuList)
     {
 
@@ -133,30 +157,102 @@ class Service
 
     }
 
-    private function importLanguages($languageList)
+    private function addPages($directory, $parentId, $recursive, $menuName, $language)
     {
 
-        foreach ($languageList as $language) {
+        $array_items = array();
 
-            if (!ipContent()->getLanguageByCode($language['code'])) {
 
-                $languageId = ipContent()->addLanguage($language['d_long'], $language['d_short'], $language['code'], $language['url'], true);
+        if ($handle = opendir($directory)) {
 
-//                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
+            $dirArray = array();
 
-            } else {
-                $languageId = ipContent()->getLanguageByCode($language['code'])->getId();
-
+            while ($file = readdir($handle)) {
+                $dirArray[] = $file;
             }
-            //TODO
 
 
-            $this->languagesForImporting[] = ipContent()->getLanguage($languageId);;
+            sort($dirArray);
+
+            foreach ($dirArray as $file) {
+                if ($file != "." && $file != "..") {
+                    if (is_dir($directory . "/" . $file)) {
+
+                        if ($recursive) {
+                            $pageFileNamePath = $directory . "/" . $file . ".json";
+                            if (is_file($pageFileNamePath)) {
+                                $string = file_get_contents($pageFileNamePath);
+                                $pageData = json_decode($string, true);
+
+                                $pageSettings = $pageData['settings'];
+//                                $buttonTitle = $pageSettings['button_title'];
+
+                                if ($pageSettings['page_title']) {
+                                    $pageTitle = $pageSettings['page_title'];
+                                } else {
+                                    $pageTitle = '';
+                                }
+
+
+                                $url = $pageSettings['url'];
+
+                                $pageData = array('languageCode' => $language->getCode(),
+                                    'urlPath' => esc($url),
+                                    'metaTitle' => esc($pageTitle),
+                                );
+
+                                $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
+
+
+                                $this->addPages($directory . "/" . $file, $pageId, $recursive, $menuName, $language);
+                            } else {
+                                Log::addRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Menu name: " . $menuName);
+                            }
+                        }
+
+                    } else {
+                        $fileFullPath = $directory . "/" . $file;
+                        if (!is_dir(preg_replace("/\\.[^.\\s]{3,4}$/", "", $fileFullPath))) {
+                            $string = file_get_contents($fileFullPath);
+
+                            $pageData = json_decode($string, true);
+                            $pageSettings = $pageData['settings'];
+//                            $buttonTitle = $pageSettings['button_title'];
+//                            $pageTitle = $pageSettings['page_title'];
+                            $url = $pageSettings['url'];
+
+                            if ($pageSettings['page_title']) {
+                                $pageTitle = $pageSettings['page_title'];
+                            } else {
+                                $pageTitle = '';
+                            }
+
+//                            $pageId = \Ip\Module\Content\Service::addPage(
+//                                $zoneName,
+//                                $parentId,
+//                                $buttonTitle,
+//                                $pageTitle,
+//                                $url
+//                            );
+
+                            $pageData = array('languageCode' => $language->getCode(),
+                                'urlPath' => esc($url),
+                                'metaTitle' => esc($pageTitle),
+                            );
+
+
+                            $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
+                            $this->importWidgets($fileFullPath, $pageId, $menuName, $language);
+
+
+                        }
+                    }
+                }
+            }
+            closedir($handle);
         }
-
-        return true;
+        return $array_items;
     }
-
 
     private function importWidgets($fileName, $pageId, $menuName, $language)
     {
@@ -218,7 +314,7 @@ class Service
 
                                 // Create a file with a  new name if a file already exists
 
-                                $newFileName = $this->createFileName($widgetData['imageOriginal']);
+                                $newFileName = self::createFileName($widgetData['imageOriginal']);
 
                                 $this->copyFileToRepository($widgetData['imageOriginal'], $newFileName);
 
@@ -280,48 +376,50 @@ class Service
 
 
                         case 'Gallery':
-                            foreach ($widgetData['images'] as $image) {
+                            if (isset($widgetData['images'])){
+                                foreach ($widgetData['images'] as $image) {
 
-                                $newImage = array();
+                                    $newImage = array();
 
-                                if (isset($image['imageOriginal'])) {
+                                    if (isset($image['imageOriginal'])) {
 
-                                    // Create a file with a  new name if a file already exists
+                                        // Create a file with a  new name if a file already exists
 
-                                    $newFileName = $this->createFileName($image['imageOriginal']);
+                                        $newFileName = $this->createFileName($image['imageOriginal']);
 
-                                    $this->copyFileToRepository($image['imageOriginal'], $newFileName);
+                                        $this->copyFileToRepository($image['imageOriginal'], $newFileName);
 
-                                    $newImage['imageOriginal'] = $newFileName;
+                                        $newImage['imageOriginal'] = $newFileName;
 
-                                    if (isset($image['title'])) {
-                                        $newImage['title'] = $image['title'];
-                                    }else{
-                                        $newImage['title'] = '';
+                                        if (isset($image['title'])) {
+                                            $newImage['title'] = $image['title'];
+                                        } else {
+                                            $newImage['title'] = '';
+                                        }
+
+                                        if (isset($image['cropX1'])) {
+                                            $newImage['cropX1'] = $image['cropX1'];
+                                        }
+
+                                        if (isset($image['cropX2'])) {
+                                            $newImage['cropX2'] = $image['cropX2'];
+                                        }
+
+                                        if (isset($image['cropY1'])) {
+                                            $newImage['cropY1'] = $image['cropY1'];
+                                        }
+
+                                        if (isset($image['cropY2'])) {
+                                            $newImage['cropY2'] = $image['cropY2'];
+                                        }
+
                                     }
-
-                                    if (isset($image['cropX1'])) {
-                                        $newImage['cropX1'] = $image['cropX1'];
-                                    }
-
-                                    if (isset($image['cropX2'])) {
-                                        $newImage['cropX2'] = $image['cropX2'];
-                                    }
-
-                                    if (isset($image['cropY1'])) {
-                                        $newImage['cropY1'] = $image['cropY1'];
-                                    }
-
-                                    if (isset($image['cropY2'])) {
-                                        $newImage['cropY2'] = $image['cropY2'];
-                                    }
+                                    $content['images'][] = $newImage;
 
                                 }
-                                $content['images'][] = $newImage;
 
+                                $processWidget = true;
                             }
-
-                            $processWidget = true;
                             break;
 
                         case 'Heading':
@@ -403,19 +501,7 @@ class Service
         }
     }
 
-    private function copyFileToRepository($fileNameInArchive, $newFileName)
-    {
-
-        $fileFromArchive = ipFile('file/secure/tmp/' . $this->archiveDir . '/archive/' . $fileNameInArchive);
-        if (copy($fileFromArchive, ipFile('file/repository/' . $newFileName))) {
-            return true;
-        } else {
-            return false;
-        }
-
-    }
-
-    private function createFileName($fullPathName)
+    public static function createFileName($fullPathName)
     {
 
         $path = pathinfo($fullPathName, PATHINFO_DIRNAME);
@@ -435,88 +521,20 @@ class Service
         return $newFilename;
     }
 
-    private function addPages($directory, $parentId, $recursive, $menuName, $language)
+    private function copyFileToRepository($fileNameInArchive, $newFileName)
     {
 
-        $array_items = array();
+        $fileFromArchive = ipFile('file/secure/tmp/' . $this->archiveDir . '/archive/' . $fileNameInArchive);
 
+        $newFileNamePath = ipFile('file/repository/' . $newFileName);
 
-        if ($handle = opendir($directory)) {
-
-            $dirArray = array();
-
-            while ($file = readdir($handle)) {
-                $dirArray[] = $file;
-            }
-
-
-            sort($dirArray);
-
-            foreach ($dirArray as $file) {
-                if ($file != "." && $file != "..") {
-                    if (is_dir($directory . "/" . $file)) {
-
-                        if ($recursive) {
-                            $pageFileNamePath = $directory . "/" . $file . ".json";
-                            if (is_file($pageFileNamePath)) {
-                                $string = file_get_contents($pageFileNamePath);
-                                $pageData = json_decode($string, true);
-
-                                $pageSettings = $pageData['settings'];
-                                $buttonTitle = $pageSettings['button_title'];
-                                $pageTitle = $pageSettings['page_title'];
-                                $url = $pageSettings['url'];
-
-                                $pageData = array('languageCode' => $language->getCode(),
-                                    'urlPath' => esc($url),
-                                    'metaTitle' => esc($pageTitle),
-                                );
-
-                                $pageId = ipContent()->addPage($parentId, $buttonTitle, $pageData);
-
-
-                                $this->addPages($directory . "/" . $file, $pageId, $recursive, $menuName, $language);
-                            } else {
-                                Log::addRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Menu name: " . $menuName);
-                            }
-                        }
-
-                    } else {
-                        $fileFullPath = $directory . "/" . $file;
-                        if (!is_dir(preg_replace("/\\.[^.\\s]{3,4}$/", "", $fileFullPath))) {
-                            $string = file_get_contents($fileFullPath);
-
-                            $pageData = json_decode($string, true);
-                            $pageSettings = $pageData['settings'];
-                            $buttonTitle = $pageSettings['button_title'];
-                            $pageTitle = $pageSettings['page_title'];
-                            $url = $pageSettings['url'];
-
-
-//                            $pageId = \Ip\Module\Content\Service::addPage(
-//                                $zoneName,
-//                                $parentId,
-//                                $buttonTitle,
-//                                $pageTitle,
-//                                $url
-//                            );
-
-                            $pageData = array('languageCode' => $language->getCode(),
-                                'urlPath' => esc($url),
-                                'metaTitle' => esc($pageTitle),
-                            );
-
-                            $pageId = ipContent()->addPage($parentId, $buttonTitle, $pageData);
-                            $this->importWidgets($fileFullPath, $pageId, $menuName, $language);
-
-
-                        }
-                    }
-                }
-            }
-            closedir($handle);
+        if (file_exists($fileFromArchive)){
+            copy($fileFromArchive, $newFileNamePath);
+        }else{
+            Log::addRecord('ERROR. Error while copying file ' . $fileFromArchive.' to '.$newFileNamePath, 'error');
+            //TODOX throw exception
         }
-        return $array_items;
+
     }
 
     public function startExport()

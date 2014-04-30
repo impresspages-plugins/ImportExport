@@ -23,17 +23,17 @@ class ManagerExport
         $languages = self::getLanguages();
 
         $menuLists = null;
-        foreach ($languages as $language){
+        foreach ($languages as $language) {
             $menuLists[$language->getCode()] = self::getTopLevelMenus($language->getCode());
         }
 
         self::saveSiteSettings($menuLists, $languages);
 
-        foreach ($menuLists as $languageCode=>$menuList) {
+        foreach ($menuLists as $languageCode => $menuList) {
 
 //            var_dump($menuList);
 
-            foreach ($menuList as $menuItem){
+            foreach ($menuList as $menuItem) {
 
                 $menuAlias = $menuItem['alias'];
 
@@ -68,7 +68,7 @@ class ManagerExport
             throw ($e);
         }
 
-        return self::getTempDir().$archiveFileName;
+        return self::getTempDir() . $archiveFileName;
 
     }
 
@@ -83,6 +83,7 @@ class ManagerExport
         $languages = ipContent()->getLanguages();
         return $languages;
     }
+
     // By nbari at dalmp dot com. http://www.php.net/manual/en/function.rmdir.php
     private static function delTree($dir)
     {
@@ -129,7 +130,6 @@ class ManagerExport
     }
 
 
-
     private static function exportMenuPages($menu, $path)
     {
         $pages = ipContent()->getChildren($menu['id']);
@@ -137,21 +137,23 @@ class ManagerExport
 
     }
 
-    private static function exportPages($pages, $path, $exportedPageId){
-        foreach ($pages as $key=>$page){
+    private static function exportPages($pages, $path, $exportedPageId)
+    {
+        foreach ($pages as $key => $page) {
             /** @var \Ip\Menu\Item $page */
             $exportedPageId++;
             $children = $page->getChildren();
-            if (!empty($children)){
-                self::exportPages($children, $path.'/'.str_pad($exportedPageId, 4, '0', STR_PAD_LEFT), $exportedPageId);
+            if (!empty($children)) {
+                self::exportPages($children, $path . '/' . str_pad($exportedPageId, 4, '0', STR_PAD_LEFT), $exportedPageId);
             }
 
 //TODO           $path . "/" . str_pad($key, 4, '0', STR_PAD_LEFT) . '_' . $dirName;
 
-            self::saveFile($page, $path.'/'.str_pad($exportedPageId, 4, '0', STR_PAD_LEFT), $exportedPageId, $exportedPageId);
+            self::saveFile($page, $path, $exportedPageId);
         }
 
     }
+
 //            $tmpElements = $menu->getElements($languageId, $parentId, 0, null, true);
 
     private static function saveFile($page, $path, $position)
@@ -160,35 +162,35 @@ class ManagerExport
         // where alias = 'name', langugage, isDeleted
 
 
-            $model = new ModelExport();
-            try {
-                $pageId = $page->getId();
-                // Add page button, title, visibility, meta title, meta keywords, meta description
-                // URL, redirect type, redirect to external page URL and RSS settings.
-                $content = Array();
-                $settings = self::getPageSettings($pageId);
+        $model = new ModelExport();
+        try {
+            $pageId = $page->getId();
+            // Add page button, title, visibility, meta title, meta keywords, meta description
+            // URL, redirect type, redirect to external page URL and RSS settings.
+            $content = Array();
+            $settings = self::getPageSettings($pageId);
 //            var_dump($settings);
-                $content['settings'] = $settings;
-                $content['settings']['position'] = $position;
-                $widgetData = $model->getElements($pageId);
+            $content['settings'] = $settings;
+            $content['settings']['position'] = $position;
+            $widgetData = $model->getElements($pageId);
 
-                if ($widgetData) {
-                    $content['widgets'] = $widgetData;
-                }
-
-            } catch (\Exception $e) {
-                Log::addRecord("Export error when exporting to " . $path . " Directory: " . $position . " - " . $e->getMessage());
+            if ($widgetData) {
+                $content['widgets'] = $widgetData;
             }
+
+        } catch (\Exception $e) {
+            Log::addRecord("Export error when exporting to " . $path . " Directory: " . $position . " - " . $e->getMessage());
+        }
 
 //            var_dump($content);
 
-            if (!empty($content)) {
-                try {
-                    self::savePages($content, $path, str_pad($position, 4, '0', STR_PAD_LEFT));
-                } catch (\Exception $e) {
-                    Log::addRecord("Export error when saving to " . $path . " File: " . $position . " - " . $e->getMessage());
-                }
+        if (!empty($content)) {
+            try {
+                self::savePages($content, $path, str_pad($position, 4, '0', STR_PAD_LEFT));
+            } catch (\Exception $e) {
+                Log::addRecord("Export error when saving to " . $path . " File: " . $position . " - " . $e->getMessage());
             }
+        }
 
     }
 
@@ -232,8 +234,7 @@ class ManagerExport
         }
 
 
-
-        $fh = fopen($path. '/' . $saveFileName . '.json', 'w');
+        $fh = fopen($path . '/' . $saveFileName . '.json', 'w');
 
         fwrite($fh, json_encode($content));
 

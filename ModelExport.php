@@ -178,7 +178,18 @@ class ModelExport
 
 
             if (isset($widgetRecord['data'])){
-                $widget['data'] = json_decode($widgetRecord['data']);
+                $widget['data'] = json_decode($widgetRecord['data'], true);
+                switch ($widget['type']){
+                    case 'Image':
+                        self::copyWidgetFile($widget['data']['imageOriginal']);
+                    break;
+                    case 'Gallery':
+                        self::copyWidgetGalleryFiles($widget['data']);
+                    break;
+                    case 'File':
+                        //TODOX implement file exporting
+                    break;
+                }
             }else{
                 $widget = false;
             }
@@ -188,6 +199,50 @@ class ModelExport
         }
 
         return $widget;
+    }
+
+    public static function copyWidgetFile($widgetFile){
+
+        if (isset($widgetFile)){
+
+            $originalFileName = esc($widgetFile);
+            $originalPathName = ipFile('file/repository/'.$originalFileName);
+            if (file_exists($originalPathName)){
+
+                $archiveRepoPath = ManagerExport::getTempDir().ManagerExport::ARCHIVE_DIR.'/file/';
+                if (!is_dir($archiveRepoPath)){
+                    mkdir($archiveRepoPath, null, true);
+                }
+
+                $archiveRepoPathName = $archiveRepoPath.'/'.$originalFileName;
+                copy($originalPathName, $archiveRepoPathName);
+
+                return $originalFileName;
+            }else{
+                Log::addRecord('File '.esc($widgetFile).' does not exist in repository', 'error');
+            }
+
+        }else{
+            Log::addRecord('Widget image file is not set', 'error');
+            return false;
+        }
+
+    }
+
+    public static function copyWidgetGalleryFiles($widgetData){
+
+        if (!empty($widgetData['images'])){
+            foreach ($widgetData['images'] as $image){
+                self::copyWidgetFile($image['imageOriginal']);
+            }
+
+        }
+
+    }
+
+    public static function copyWidgetFiles($widgetData){
+
+
     }
 
     public static function getPageSettings($pageId)
