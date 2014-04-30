@@ -16,6 +16,7 @@
             $('.ipsLoading').removeClass('hidden');
             $('.ipsFileContainer').addClass('hidden');
             $('.ipsImportForm').addClass('hidden');
+            $('.ipsExportForm').addClass('hidden');
         }
 
         var processResponse = function (event, response) {

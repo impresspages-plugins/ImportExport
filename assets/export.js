@@ -7,7 +7,6 @@
 
 
         this.init = function () {
-            //        $('form').validator(validatorConfig);
             $('.ipsExportForm').on('ipSubmitResponse', processResponse);
             $('.ipsExportForm').on('submit', showProgressIndicator);
 
@@ -16,14 +15,14 @@
         var showProgressIndicator = function () {
             $('.ipsLoading').removeClass('hidden');
             $('.ipsFileContainer').addClass('hidden');
-            $('.ipsImportExportSubmit').addClass('hidden');
+            $('.ipsImportForm').addClass('hidden');
+            $('.ipsExportForm').addClass('hidden');
         }
 
         var processResponse = function (event, response) {
             if (response.status && response.status == 'success') {
                 //form has been successfully submitted.
 
-                $('.ipsExportForm').addClass('hidden');
                 $('.ipsLoading').addClass('hidden');
 
                 var toClone = $('.ipsLogRecord').first();
