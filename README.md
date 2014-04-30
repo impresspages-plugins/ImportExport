@@ -9,7 +9,7 @@ Currently the plugin allows to import and export entire site page structure and 
 3.x branch allows to export the sites from ImpressPages 3 and import them to ImpressPages 4.
 
 To export the site: 
-Install the plugin. Click "Import/Export site" menu in admin panel. Click **Export site to zip** button. 
+Install the plugin. Click "Import/Export site" menu in admin panel. Click "Export site to zip" button. 
 When export is finished, click "Download archive http://....." link. 
 
 To import the site:
