@@ -40,7 +40,7 @@ class ManagerExport
                 Log::addRecord("Processing menu " . $menuItem['alias'] . ' for language code:' . $languageCode);
 
                 try {
-                    self::getPages(
+                    self::exportMenuPages(
                         $menuItem,
                         self::getTempDir() . self::ARCHIVE_DIR . '/' . $languageCode . "_" . $menuAlias
                     );
@@ -68,7 +68,7 @@ class ManagerExport
             throw ($e);
         }
 
-        return ipFile('file/tmp/data/export/' . $archiveFileName);
+        return self::getTempDir().$archiveFileName;
 
     }
 
@@ -130,11 +130,11 @@ class ManagerExport
 
 
 
-    private static function getPages($menu, $path)
+    private static function exportMenuPages($menu, $path)
     {
-        $tmpElements = \Ip\Menu\Helper::getMenuItems($menu['alias'], 1, 1000);
+        $pages = ipContent()->getChildren($menu['id']);
+        self::exportPages($pages, $path, 1);
 
-        self::exportPages($tmpElements, $menu['alias'], 1);
     }
 
     private static function exportPages($pages, $path, $exportedPageId){
@@ -142,7 +142,7 @@ class ManagerExport
             /** @var \Ip\Menu\Item $page */
             $exportedPageId++;
             $children = $page->getChildren();
-            if (!is_null($children)){
+            if (!empty($children)){
                 self::exportPages($children, $path.'/'.str_pad($exportedPageId, 4, '0', STR_PAD_LEFT), $exportedPageId);
             }
 
@@ -154,26 +154,15 @@ class ManagerExport
     }
 //            $tmpElements = $menu->getElements($languageId, $parentId, 0, null, true);
 
-    private static function saveFile($menuItem, $path, $position)
+    private static function saveFile($page, $path, $position)
     {
-
-        /** @var \Ip\Menu\Item $page */
-        $page = $menuItem->getTarget();
 
         // where alias = 'name', langugage, isDeleted
 
-        $list = ipDb()->selectAll('page', '*', array('alias'=>$page['alias'], 'isDeleted'=>0));
-
-        $pages = \Ip\Page::createList($list);
-
-        foreach ($pages as $page){
-    //        var_dump($page);
-            /** @var $page \Ip\Page */
-            $pageId = $page->getId();
 
             $model = new ModelExport();
             try {
-
+                $pageId = $page->getId();
                 // Add page button, title, visibility, meta title, meta keywords, meta description
                 // URL, redirect type, redirect to external page URL and RSS settings.
                 $content = Array();
@@ -201,7 +190,6 @@ class ManagerExport
                 }
             }
 
-        }
     }
 
     private static function getPageSettings($pageId)
@@ -237,15 +225,15 @@ class ManagerExport
 
         $path = preg_replace('/[^\/a-zA-Z0-9_-]$/s', '', $path);
         $saveFileName = preg_replace('/[^a-zA-Z0-9_-]$/s', '', $saveFileName);
-        $saveFullPath = ipFile(self::PLUGIN_TEMP_DIR.self::ARCHIVE_DIR.'/'.$path) ;
+//        $saveFullPath = ipFile(self::PLUGIN_TEMP_DIR.self::ARCHIVE_DIR.'/'.$path) ;
 
-        if (!file_exists($saveFullPath)) {
-            mkdir($saveFullPath, 0777, true);
+        if (!file_exists($path)) {
+            mkdir($path, 0777, true);
         }
 
 
 
-        $fh = fopen($saveFullPath. '/' . $saveFileName . '.json', 'w');
+        $fh = fopen($path. '/' . $saveFileName . '.json', 'w');
 
         fwrite($fh, json_encode($content));
 

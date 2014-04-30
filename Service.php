@@ -294,6 +294,12 @@ class Service
 
                                     $newImage['imageOriginal'] = $newFileName;
 
+                                    if (isset($image['title'])) {
+                                        $newImage['title'] = $image['title'];
+                                    }else{
+                                        $newImage['title'] = '';
+                                    }
+
                                     if (isset($image['cropX1'])) {
                                         $newImage['cropX1'] = $image['cropX1'];
                                     }
