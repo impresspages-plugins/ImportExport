@@ -351,7 +351,7 @@ class Service
 
                                 $newFile = array();
 
-                                if (isset($file['imageOriginal'])) {
+                                if (isset($file['fileName'])) {
 
                                     // Create a file with a  new name if a file already exists
 
@@ -524,14 +524,16 @@ class Service
     private function copyFileToRepository($fileNameInArchive, $newFileName)
     {
 
-        $fileFromArchive = ipFile('file/secure/tmp/' . $this->archiveDir . '/archive/' . $fileNameInArchive);
+        $fileFromArchive = ipFile('file/secure/tmp/' . $this->archiveDir . '/archive/file/' . $fileNameInArchive);
 
         $newFileNamePath = ipFile('file/repository/' . $newFileName);
 
         if (file_exists($fileFromArchive)) {
-            copy($fileFromArchive, $newFileNamePath);
+            if (!copy($fileFromArchive, $newFileNamePath)){
+                Log::addRecord('Failed to copy file ' . $fileFromArchive.' to '.$newFileNamePath, 'warning');
+            }
         } else {
-            Log::addRecord('Warbubg. File exists ' . $fileFromArchive . ' to ' . $newFileNamePath, 'warning');
+            Log::addRecord('File does not exist ' . $fileFromArchive, 'warning');
             //TODOX throw exception
         }
 
