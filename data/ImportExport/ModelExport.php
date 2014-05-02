@@ -89,7 +89,7 @@ class ModelExport
             $languageRecord['code'] = $language->getCode();
             $languageRecord['d_short'] = $language->getShortDescription();
             $languageRecord['d_long'] = $language->getLongDescription();
-            $languageRecord['url'] = $language->getUrl();
+            $languageRecord['urlPath'] = $language->getUrl();
 //            $languageRecord['text_direction'] = $language->getTextDirection();
             $languageRecord['visible'] = $language->getVisible();
 
@@ -108,7 +108,7 @@ class ModelExport
         foreach ($zones as $zone) {
             $item['name'] = $zone->getName();
             $item['title'] = $zone->getTitle();
-            $item['url'] = $zone->getUrl();
+            $item['urlPath'] = $zone->getUrl();
             $item['description'] = $zone->getDescription();
             $zoneList[] = $item;
         }

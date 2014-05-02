@@ -161,6 +161,7 @@ class ManagerExport
                     // URL, redirect type, redirect to external page URL and RSS settings.
                     $content = Array();
                     $content['settings'] = self::getPageSettings($element->getId());
+                    $content['settings']['languageCode'] = $site->getLanguageById($languageId);
                     $content['settings']['position'] = $key;
                     $widgetData = $model->getElements($zone->getName(), $element->getId());
 
@@ -188,20 +189,19 @@ class ManagerExport
     private static function getPageSettings($pageId)
     {
         $allSettings = ModelExport::getPageSettings($pageId);
-
         $settings = array(
             'id' => $allSettings['id'],
-            'parent' => $allSettings['parent'],
-            'button_title' => $allSettings['button_title'],
-            'visible' => $allSettings['visible'],
-            'page_title' => $allSettings['page_title'],
+            'parentId' => $allSettings['parent'],
+//            'button_title' => $allSettings['button_title'],
+            'isVisible' => $allSettings['visible'],
+            'title' => $allSettings['page_title'],
             'keywords' => $allSettings['keywords'],
             'description' => $allSettings['description'],
-            'url' => $allSettings['url'],
-            'last_modified' => $allSettings['last_modified'],
-            'created_on' => $allSettings['created_on'],
+            'urlPath' => $allSettings['url'],
+            'updatedAt' => $allSettings['last_modified'],
+            'createdAt' => $allSettings['created_on'],
             'type' => $allSettings['type'],
-            'redirect_url' => $allSettings['redirect_url']
+            'redirectUrl' => $allSettings['redirect_url']
         );
 
 
