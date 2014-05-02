@@ -25,6 +25,7 @@ class IpFile extends Widget
 
                 if (isset($file['fileName'])) {
                     self::copyImage($file['fileName']);
+                    $file['fileName'] = basename($file['fileName']);
                 }
 
                 $files[] = self::getSelectedWidgetParams($file, array('fileName', 'title'));

@@ -79,7 +79,7 @@ abstract class Widget implements iWidget
     protected static function copyImage($imageFileName)
     {
         $destination = \Modules\data\ImportExport\ManagerExport::getTempDir() .
-            \Modules\data\ImportExport\ManagerExport::ARCHIVE_DIR . '/' . $imageFileName;
+            \Modules\data\ImportExport\ManagerExport::ARCHIVE_DIR . '/file/' . basename($imageFileName);
         $dirName = dirname($destination);
 
         if (!is_dir($dirName)) {

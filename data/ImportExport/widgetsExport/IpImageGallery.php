@@ -26,6 +26,7 @@ class IpImageGallery extends Widget
 
                 if (isset($image['imageOriginal'])) {
                     self::copyImage($image['imageOriginal']);
+                    $image['imageOriginal'] = basename($image['imageOriginal']);
                 }
 
                 $images[] = self::getSelectedWidgetParams($image, array('imageOriginal', 'cropX1', 'cropY1', 'cropX2', 'cropY2', 'title'));

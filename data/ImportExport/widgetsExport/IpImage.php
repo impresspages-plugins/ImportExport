@@ -21,6 +21,8 @@ class IpImage extends Widget
 
         if (isset($this->data['imageOriginal'])) {
             self::copyImage($this->data['imageOriginal']);
+            $this->data['imageOriginal'] = basename($this->data['imageOriginal']);
+
         }
 
         if (isset($this->data['text'])) {

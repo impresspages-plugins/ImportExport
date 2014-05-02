@@ -161,8 +161,10 @@ class ManagerExport
                     // URL, redirect type, redirect to external page URL and RSS settings.
                     $content = Array();
                     $content['settings'] = self::getPageSettings($element->getId());
-                    $content['settings']['languageCode'] = $site->getLanguageById($languageId);
+                    $content['settings']['languageCode'] = $site->getLanguageById($languageId)->getCode();
                     $content['settings']['position'] = $key;
+
+                    $content['settings']['layout'] = self::getPageLayout($element, $zone);
                     $widgetData = $model->getElements($zone->getName(), $element->getId());
 
                     if (!is_null($widgetData)) {
@@ -184,6 +186,18 @@ class ManagerExport
             }
         }
         return $pages;
+    }
+
+    private static function getPageLayout($element, $zone){
+
+
+        $layout = \Frontend\Db::getPageLayout($zone->getAssociatedModuleGroup(), $zone->getAssociatedModule(), $element->getId());
+
+        if (!$layout || !is_file(BASE_DIR . THEME_DIR . THEME . DIRECTORY_SEPARATOR . $layout)) {
+            $layout = $zone->getLayout();
+        }
+
+        return $layout;
     }
 
     private static function getPageSettings($pageId)

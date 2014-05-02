@@ -46,6 +46,7 @@ class IpTextImage extends IpText
 
         if (isset($this->data['imageOriginal'])) {
             self::copyImage($this->data['imageOriginal']);
+            $this->data['imageOriginal'] = basename($this->data['imageOriginal']);
         }
 
         $elements['data'] = self::getSelectedWidgetParams($this->data, array('imageOriginal', 'cropX1', 'cropY1', 'cropX2', 'cropY2'));
