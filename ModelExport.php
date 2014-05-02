@@ -148,14 +148,20 @@ class ModelExport
 
                 try {
 
-                    $widgetFiltered = self::getWidget($widgetRecord);
+                    if ($widgetRecord['name']!='Columns'){
 
-                    if ($widgetFiltered) {
-                        $widgetData[] = $widgetFiltered;
+                        $widgetFiltered = self::getWidget($widgetRecord);
+
+                        if ($widgetFiltered) {
+                            $widgetData[] = $widgetFiltered;
+                        }
+
+                    }else{
+                        Log::addRecord('Columns widget is not supported','error');
                     }
 
                 } catch (\Exception $e) {
-                    Log::addRecord($e->getMessage());
+                    Log::addRecord($e->getMessage(), 'error');
                 }
             }
         }
