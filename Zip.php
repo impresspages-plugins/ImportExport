@@ -4,8 +4,14 @@ namespace Plugin\ImportExport;
 
 class Zip
 {
-
-    public static function zip($path, $archiveDir, $archiveFileName)
+    /**
+     * Adds files to zip archive
+     * @param $path Source path
+     * @param $archiveSubDir Archive subdirectory
+     * @param $archiveFileName Zip archive file name without extension.
+     * @return string
+     */
+    public static function zip($path, $archiveSubDir, $archiveFileName)
     {
 
         require_once(__DIR__ . '/lib/pclzip.lib.php');
@@ -26,7 +32,7 @@ class Zip
         $archive = new \PclZip($path . '/' . $archiveFileName);
 
         Log::addRecord('Copying to archive');
-        $v_dir = $path . $archiveDir; // or dirname(__FILE__);
+        $v_dir = $path . $archiveSubDir;
         $archive->add($v_dir, PCLZIP_OPT_REMOVE_PATH, $path);
         return $archiveFileName;
     }

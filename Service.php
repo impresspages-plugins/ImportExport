@@ -123,9 +123,15 @@ class Service
             $menuName = $prefix . $menu['name'] . $suffix;
             $menuTitle = $menu['title'];
             $menuDescription = $menu['description'];
-            $menuUrl = $menu['url'];
+            $menuUrl = $menu['urlPath'];
+            if (isset($menu['languageCode'])){
+                $languageCode = $menu['languageCode'];
+            }else{
+                $languageCode = 'en';
+            }
+
             $associatedModule = 'Content';
-            $defaultLayout = 'main.php';
+            $defaultLayout = 'main.php'; // TODO custom default layout
 
             $this->menusForImporting[] = Array(
                 'nameInFile' => $menu['name'],
@@ -134,7 +140,8 @@ class Service
                 'description' => $menuDescription,
                 'url' => $menuUrl,
                 'associatedModule' => $associatedModule,
-                'layout' => $defaultLayout
+                'layout' => $defaultLayout,
+                'languageCode' => $languageCode,
             );
 
             try {
@@ -157,6 +164,46 @@ class Service
 
     }
 
+    private function addPage($parentId, $language, $pageData)
+    {
+        $pageSettings = $pageData['settings'];
+//                            $pageTitle = $pageSettings['title'];
+        $url = $pageSettings['urlPath'];
+
+
+        if ($pageSettings['title']) {
+            $pageTitle = $pageSettings['title'];
+        } else {
+            $pageTitle = '';
+        }
+
+//                            $pageId = \Ip\Module\Content\Service::addPage(
+//                                $zoneName,
+//                                $parentId,
+//                                $buttonTitle,
+//                                $pageTitle,
+//                                $url
+//                            );
+
+        $pageData = array('languageCode' => $language->getCode(),
+            'urlPath' => esc($url),
+            'metaTitle' => esc($pageTitle),
+        );
+
+
+        $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
+
+        if (isset($pageSettings['layout'])){
+            $layout = $pageSettings['layout'];
+        }else{
+            $layout = 'main.php';
+        }
+
+        ipPageStorage($pageId)->set('layout', $layout);
+
+        return $pageId;
+    }
+
     private function addPages($directory, $parentId, $recursive, $menuName, $language)
     {
 
@@ -171,7 +218,6 @@ class Service
                 $dirArray[] = $file;
             }
 
-
             sort($dirArray);
 
             foreach ($dirArray as $file) {
@@ -181,69 +227,25 @@ class Service
                         if ($recursive) {
                             $pageFileNamePath = $directory . "/" . $file . ".json";
                             if (is_file($pageFileNamePath)) {
+
                                 $string = file_get_contents($pageFileNamePath);
                                 $pageData = json_decode($string, true);
-
-                                $pageSettings = $pageData['settings'];
-//                                $buttonTitle = $pageSettings['button_title'];
-
-                                if ($pageSettings['page_title']) {
-                                    $pageTitle = $pageSettings['page_title'];
-                                } else {
-                                    $pageTitle = '';
-                                }
-
-
-                                $url = $pageSettings['url'];
-
-                                $pageData = array('languageCode' => $language->getCode(),
-                                    'urlPath' => esc($url),
-                                    'metaTitle' => esc($pageTitle),
-                                );
-
-                                $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
-
-
+                                $pageId = $this->addPage($parentId, $language, $pageData);
                                 $this->addPages($directory . "/" . $file, $pageId, $recursive, $menuName, $language);
+
                             } else {
-                                Log::addRecord('ERROR: File ' . $pageFileNamePath . " does not exist. Menu name: " . $menuName);
+                                Log::addRecord('File ' . $pageFileNamePath . " does not exist. Menu name: " . $menuName, 'error');
                             }
                         }
 
                     } else {
                         $fileFullPath = $directory . "/" . $file;
                         if (!is_dir(preg_replace("/\\.[^.\\s]{3,4}$/", "", $fileFullPath))) {
+
                             $string = file_get_contents($fileFullPath);
-
                             $pageData = json_decode($string, true);
-                            $pageSettings = $pageData['settings'];
-//                            $buttonTitle = $pageSettings['button_title'];
-//                            $pageTitle = $pageSettings['page_title'];
-                            $url = $pageSettings['url'];
-
-                            if ($pageSettings['page_title']) {
-                                $pageTitle = $pageSettings['page_title'];
-                            } else {
-                                $pageTitle = '';
-                            }
-
-//                            $pageId = \Ip\Module\Content\Service::addPage(
-//                                $zoneName,
-//                                $parentId,
-//                                $buttonTitle,
-//                                $pageTitle,
-//                                $url
-//                            );
-
-                            $pageData = array('languageCode' => $language->getCode(),
-                                'urlPath' => esc($url),
-                                'metaTitle' => esc($pageTitle),
-                            );
-
-
-                            $pageId = ipContent()->addPage($parentId, $pageTitle, $pageData);
+                            $pageId = $this->addPage($parentId, $language, $pageData);
                             $this->importWidgets($fileFullPath, $pageId, $menuName, $language);
-
 
                         }
                     }
@@ -282,7 +284,11 @@ class Service
 
             foreach ($widgetList as $widgetKey => $widgetValue) {
 
-                $blockId = 'main'; // TODO X Allow to import all blocks, not only main
+                if (isset($widgetValue['blockName'])){
+                    $blockName = $widgetValue['blockName'];
+                }else{
+                    $blockName = 'main'; // TODO X Allow to import all blocks, not only main
+                }
 
                 if (isset($widgetValue['type'])) {
                     $widgetName = $widgetValue['type'];
@@ -469,16 +475,16 @@ class Service
                             $content = array();
                         }
 
-                        $widgetId = \Ip\Internal\Content\Service::createWidget($widgetName, $content, $skin, $revisionId, 0, $blockId, $position);
+                        $widgetId = \Ip\Internal\Content\Service::createWidget($widgetName, $content, $skin, $revisionId, 0, $blockName, $position);
 
 
-//                        \Ip\Internal\Content\Service::addWidgetInstance($widgetId, $revisionId, 0, $blockId, $position);
+//                        \Ip\Internal\Content\Service::addWidgetInstance($widgetId, $revisionId, 0, $blockName, $position);
 
 //                        $instanceId = \Ip\Internal\Content\Service::addWidget(
 //                            $widgetName,
 //                            $zoneName,
 //                            $pageId,
-//                            $blockId,
+//                            $blockName,
 //                            $revisionId,
 //                            $position
 //                        );

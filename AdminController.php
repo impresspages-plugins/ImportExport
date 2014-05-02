@@ -58,12 +58,4 @@ class AdminController extends \Ip\Controller
         return new \Ip\Response\Json($response);
     }
 
-//    public function testFileExport(){
-//
-//        $testJson = '{"type":"Gallery","layout":"default","data":{"images":[{"imageOriginal":"Tulips123_12.jpg","title":"flw1yellow","cropX1":"0","cropX2":"1024","cropY1":"61","cropY2":"701"},{"imageOriginal":"Penguins_39.jpg","title":"gvinpin","cropX1":"0","cropX2":"1024","cropY1":"61","cropY2":"701"},{"imageOriginal":"Lighthouse_12.jpg","title":"castle1","cropX1":"0","cropX2":"1024","cropY1":"61","cropY2":"701"},{"imageOriginal":"Chrysanthemum_48.jpg","title":"flw2red","cropX1":"0","cropX2":"1024","cropY1":"61","cropY2":"701"}]}}';
-//        $widget = json_decode($testJson, true);
-//
-//        ModelExport::copyWidgetGalleryFiles($widget['data']);
-//    }
-
 }

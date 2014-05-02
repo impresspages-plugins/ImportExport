@@ -187,18 +187,24 @@ class ManagerExport
 
 
         $settings = array(
-            'id' => $allSettings->getId(),
-            'parent' => $allSettings->getParentId(),
-            'button_title' => $allSettings->getAlias(),
-            'visible' => $allSettings->isVisible(),
-            'page_title' => $allSettings->getTitle(),
-            'keywords' => $allSettings->getKeywords(),
+            'alias' => $allSettings->getAlias(),
+            'createdAt' => $allSettings->getCreatedAt(),
             'description' => $allSettings->getDescription(),
-            'url' => $allSettings->getUrlPath(),
-            'last_modified' => $allSettings->getUpdatedAt(),
-            'created_on' => $allSettings->getCreatedAt(),
+            'id' => $allSettings->getId(),
+            'isBlank' => $allSettings->isBlank(),
+            'isDisabled' => $allSettings->isDisabled(),
+            'isSecured' => $allSettings->isSecured(),
+            'isVisible' => $allSettings->isVisible(),
+            'keywords' => $allSettings->getKeywords(),
+            'languageCode' => $allSettings->getLanguageCode(),
+            'layout' => ipPageStorage($pageId)->get('layout', 'main.php'),
+            'metaTitle' => $allSettings->getMetaTitle(),
+            'parentId' => $allSettings->getParentId(),
+            'redirectUrl' => $allSettings->getRedirectUrl(),
+            'title' => $allSettings->getTitle(),
             'type' => $allSettings->getType(),
-            'redirect_url' => $allSettings->getRedirectUrl()
+            'updatedAt' => $allSettings->getUpdatedAt(),
+            'urlPath' => $allSettings->getUrlPath(),
         );
 
 

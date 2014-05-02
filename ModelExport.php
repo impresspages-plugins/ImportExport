@@ -60,7 +60,7 @@ class ModelExport
             $languageRecord['code'] = $language->getCode();
             $languageRecord['d_long'] = $language->getTitle();
             $languageRecord['d_short'] = $language->getAbbreviation();
-            $languageRecord['url'] = $language->getUrlPath();
+            $languageRecord['urlPath'] = $language->getUrlPath();
 //            $languageRecord['text_direction'] = $language->getTextDirection();
             $languageRecord['visible'] = $language->isVisible();
             $languageList[] = $languageRecord;
@@ -80,7 +80,7 @@ class ModelExport
 //                var_dump($menuItem);
                 $item['name'] = $menuItem['alias'];
                 $item['title'] = $menuItem['title'];
-                $item['url'] = $menuItem['urlPath'];
+                $item['urlPath'] = $menuItem['urlPath'];
                 $item['description'] = $menuItem['description'];
                 $item['languageCode'] = $menuItem['languageCode'];
                 $menuForExport[] = $item;
@@ -127,7 +127,6 @@ class ModelExport
             'widget', '*',
             array(
                 'revisionId' => $publishedRevisionId,
-                'blockName' => 'main',
                 'isVisible' => 1,
                 'isDeleted' => 0
             ),
@@ -175,6 +174,9 @@ class ModelExport
                 $widget['layout'] = $widgetRecord['skin'];
             }
 
+            if (isset($widgetRecord['blockName'])) {
+                $widget['blockName'] = $widgetRecord['blockName'];
+            }
 
             if (isset($widgetRecord['data'])) {
                 $widget['data'] = json_decode($widgetRecord['data'], true);
@@ -261,5 +263,17 @@ class ModelExport
         return $retval;
     }
 
+
+    public static function getBlockNames()
+    {
+
+        $table = ipTable('widget');
+        $sql = "SELECT DISTINCT `blockName` FROM $table WHERE `isVisible` = 1 and `isDeleted` = 0 ORDER BY `blockName` ASC";
+
+        $results = ipDb()->fetchColumn($sql);
+
+        return $results;
+
+    }
 
 } 
