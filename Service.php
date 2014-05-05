@@ -21,37 +21,34 @@ class Service
 
         $this->importSiteTree($extractedDirName);
 
-        $parentId = 0;
-        $recursive = true;
-
-        foreach ($this->languagesForImporting as $language) { // TODO X fix languages
-
-        }
-
-        $languageCode = $language->getCode(); // TODO X fix languages
 
         try {
 
             foreach ($this->menusForImporting as $menuItem) {
 
                 $menuName = $menuItem['nameForImporting'];
-                Log::addRecord('MENU NAME: ' . $menuName, 'info');
+                $menuLanguageCode = $menuItem['languageCode'];
                 $recursive = true;
-                Log::addRecord('Processing language: ' . $language->getCode(), 'info');
-                $menu = \Ip\Internal\Pages\Service::getMenu($languageCode, $menuName);
+                Log::addRecord('Menu '.$menuName.' language: ' . $menuLanguageCode, 'info');
+                $menu = \Ip\Internal\Pages\Service::getMenu($menuLanguageCode , $menuName);
                 $parentSubPageId = $menu['id'];
 
-                $pageData = array('languageCode' => $language->getCode());
 
                 $directory = ipFile(
-                    'file/secure/tmp/' . $extractedDirName . '/archive/' . $language->getCode() . '_' . $menuItem['nameInFile']
+                    'file/secure/tmp/' . $extractedDirName . '/archive/' . $menuLanguageCode . '_' . $menuItem['id']
                 );
 
                 if (is_dir($directory)) {
 
                     Log::addRecord("Processing:" . $directory);
 
-                    $this->addPages($directory, $parentSubPageId, $recursive, $menuName, $language);
+                    if ($language = ipContent()->getLanguageByCode($menuLanguageCode)){
+                        $this->addPages($directory, $parentSubPageId, $recursive, $menuName, $language);
+                    }else{
+                        Log::addRecord('Language ' . $menuLanguageCode. ' not found', 'error');
+                    }
+
+
 
                 }
             }
@@ -92,7 +89,13 @@ class Service
 
             if (!ipContent()->getLanguageByCode($language['code'])) {
 
-                $languageId = ipContent()->addLanguage($language['d_long'], $language['d_short'], $language['code'], $language['url'], true);
+                if (isset($language['urlPath'])){
+                    $url = $language['urlPath'];
+                }else{
+                    $url = 'en';
+                }
+
+                $languageId = ipContent()->addLanguage($language['d_long'], $language['d_short'], $language['code'], $url, true);
 
 //                \Ip\Module\Pages\Service::addLanguage($language['code'], $language['url'], $language['d_long'], $language['d_short'], false);
 
@@ -114,13 +117,12 @@ class Service
 
         foreach ($menuList as $menu) {
 
-            $prefix = 'imported_';
             $suffix = ''; // TODO Add a prefix if page with specific name already exists
 //            while (ipContent()->getPage($prefix . $curZoneName . $suffix)) {
 //                $suffix = $suffix + 1;
 //            }
 
-            $menuName = $prefix . $menu['name'] . $suffix;
+            $menuName = $menu['name'] . $suffix;
             $menuTitle = $menu['title'];
             $menuDescription = $menu['description'];
             $menuUrl = $menu['urlPath'];
@@ -134,6 +136,7 @@ class Service
             $defaultLayout = 'main.php'; // TODO custom default layout
 
             $this->menusForImporting[] = Array(
+                'id' =>$menu['id'],
                 'nameInFile' => $menu['name'],
                 'nameForImporting' => $menuName,
                 'title' => $menuTitle,
@@ -146,9 +149,9 @@ class Service
 
             try {
 
-                $menuExists = \Ip\Internal\Pages\Service::getMenu('en', $menuName);
+                $menuExists = \Ip\Internal\Pages\Service::getMenu($languageCode, $menuName);
                 if (!isset($menuExists['isDeleted']) || ($menuExists['isDeleted'] == '1')) {
-                    \Ip\Internal\Pages\Service::createMenu('en', $menuName, $menuTitle);
+                    \Ip\Internal\Pages\Service::createMenu($languageCode, $menuName, $menuTitle);
                 } else {
                     Log::addRecord('Menu ' . $menuName . ' already exists. Importing anyway.', 'error');
                 }
@@ -231,7 +234,8 @@ class Service
                                 $string = file_get_contents($pageFileNamePath);
                                 $pageData = json_decode($string, true);
                                 $pageId = $this->addPage($parentId, $language, $pageData);
-                                $this->addPages($directory . "/" . $file, $pageId, $recursive, $menuName, $language);
+                                $this->importWidgets($pageFileNamePath, $pageId, $menuName, $language);
+                                $this->addPages($directory . "/" . $file, $pageId, true, $menuName, $language);
 
                             } else {
                                 Log::addRecord('File ' . $pageFileNamePath . " does not exist. Menu name: " . $menuName, 'error');
@@ -240,7 +244,8 @@ class Service
 
                     } else {
                         $fileFullPath = $directory . "/" . $file;
-                        if (!is_dir(preg_replace("/\\.[^.\\s]{3,4}$/", "", $fileFullPath))) {
+                        $fileFullPathWoExt = preg_replace("/\\.[^.\\s]{3,4}$/", "", $fileFullPath);
+                        if (!is_dir($fileFullPathWoExt)) {
 
                             $string = file_get_contents($fileFullPath);
                             $pageData = json_decode($string, true);
@@ -429,15 +434,16 @@ class Service
                             break;
 
                         case 'Heading':
+                            if (isset($widgetData['title'])){
+                                $content['title'] = $widgetData['title'];
+                                if (isset($widgetData['level'])) {
+                                    $content['level'] = $widgetData['level'];
+                                } else {
+                                    $content['level'] = 1;
+                                }
 
-                            $content['title'] = $widgetData['title'];
-                            if (isset($widgetData['level'])) {
-                                $content['level'] = $widgetData['level'];
-                            } else {
-                                $content['level'] = 1;
+                                $processWidget = true;
                             }
-
-                            $processWidget = true;
                             break;
                         case 'Html':
                             $content['html'] = $widgetData['html'];

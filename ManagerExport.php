@@ -29,6 +29,8 @@ class ManagerExport
 
         self::saveSiteSettings($menuLists, $languages);
 
+
+
         foreach ($menuLists as $languageCode => $menuList) {
 
 //            var_dump($menuList);
@@ -42,7 +44,7 @@ class ManagerExport
                 try {
                     self::exportMenuPages(
                         $menuItem,
-                        self::getTempDir() . self::ARCHIVE_DIR . '/' . $languageCode . "_" . $menuAlias
+                        self::getTempDir() . self::ARCHIVE_DIR . '/' . $languageCode . "_" . $menuItem['id']
                     );
                 } catch (Exception $e) {
                     throw \Exception("ERROR. Error while exporting site tree " . $e);
@@ -204,7 +206,7 @@ class ManagerExport
             'title' => $allSettings->getTitle(),
             'type' => $allSettings->getType(),
             'updatedAt' => $allSettings->getUpdatedAt(),
-            'urlPath' => $allSettings->getUrlPath(),
+            'urlPath' => rtrim($allSettings->getUrlPath(),"/"),
         );
 
 

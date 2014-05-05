@@ -51,6 +51,7 @@ class Zip
 
             $zipNameNoExt = basename($fileName, '.zip');
             $extractSubDir = $zipNameNoExt;
+
             $count = 0;
             while (is_file(ipFile('file/secure/tmp/' . $extractSubDir)) || is_dir(
                     ipFile('file/secure/tmp/' . $extractSubDir)

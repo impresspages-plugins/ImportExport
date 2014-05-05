@@ -57,10 +57,11 @@ class ModelExport
 
         foreach ($languages as $language) {
 
+            /** @var $language \Ip\Language */
             $languageRecord['code'] = $language->getCode();
             $languageRecord['d_long'] = $language->getTitle();
             $languageRecord['d_short'] = $language->getAbbreviation();
-            $languageRecord['urlPath'] = $language->getUrlPath();
+            $languageRecord['urlPath'] = rtrim($language->getUrlPath(),"/");
 //            $languageRecord['text_direction'] = $language->getTextDirection();
             $languageRecord['visible'] = $language->isVisible();
             $languageList[] = $languageRecord;
@@ -78,6 +79,7 @@ class ModelExport
         foreach ($menuLists as $languageCode => $menuList) {
             foreach ($menuList as $menuItem) {
 //                var_dump($menuItem);
+                $item['id'] = $menuItem['id'];
                 $item['name'] = $menuItem['alias'];
                 $item['title'] = $menuItem['title'];
                 $item['urlPath'] = $menuItem['urlPath'];
@@ -220,15 +222,19 @@ class ModelExport
 
                 $archiveRepoPath = ManagerExport::getTempDir() . ManagerExport::ARCHIVE_DIR . '/file/';
                 if (!is_dir($archiveRepoPath)) {
-                    mkdir($archiveRepoPath, null, true);
+                    mkdir($archiveRepoPath, 0777, true);
+                }
+                $archiveRepoPathName = $archiveRepoPath . $originalFileName;
+
+                if (copy($originalPathName, $archiveRepoPathName)){
+                    return $originalFileName;
+                }else{
+                    Log::addRecord('Failed to copy '.$originalPathName.' to '.$originalFileName, 'error');
+                    return false;
                 }
 
-                $archiveRepoPathName = $archiveRepoPath . '/' . $originalFileName;
-                copy($originalPathName, $archiveRepoPathName);
-
-                return $originalFileName;
             } else {
-                Log::addRecord('File ' . esc($widgetFile) . ' does not exist in repository', 'error');
+                Log::addRecord('File ' . esc($originalPathName) . ' does not exist in repository', 'error');
             }
 
         } else {
