@@ -48,7 +48,7 @@ class ManagerExport
                             1000,
                             null,
                             1,
-                            self::getTempDir() . self::ARCHIVE_DIR . '/' . $language_url . "_" . $zoneName
+                            self::getTempDir() . self::ARCHIVE_DIR . '/' . $language_url . "_" . $zone->getId()
                         );
                     } catch (Exception $e) {
                         throw \Exception("ERROR. Error while exporting site tree " . $e);
@@ -109,7 +109,21 @@ class ManagerExport
         $content = Array();
 
         $content['version'] = self::VERSION;
-        $content['menuLists'] = ModelExport::getZones($zones);
+
+        $menuLists = ModelExport::getZones($zones);
+        $languagesForExport = ModelExport::getLanguages($languages);
+
+        $menulistForExp = Array();
+
+        foreach ($languagesForExport as $language){
+            foreach ($menuLists as $menuList){
+                $menuList['languageCode'] = $language['code'];
+                $menulistForExp[] = $menuList;
+            }
+
+        }
+
+        $content['menuLists'] = $menulistForExp;
         $content['languages'] = ModelExport::getLanguages($languages);
 
         $fh = fopen($path . '/' . $saveFileName . '.json', 'w');

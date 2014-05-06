@@ -106,6 +106,7 @@ class ModelExport
         $zoneList = Array();
 
         foreach ($zones as $zone) {
+            $item['id'] = $zone->getId();
             $item['name'] = $zone->getName();
             $item['title'] = $zone->getTitle();
             $item['urlPath'] = $zone->getUrl();

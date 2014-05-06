@@ -30,7 +30,6 @@ var ipExportImport = new function () {
 
         var processExportResponse = function (response) {
 
-            alert('testing'); //TODO  replace Export
         }
 
         $('.ipsImportForm form').validator(validatorConfig);
