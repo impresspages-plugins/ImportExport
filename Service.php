@@ -136,7 +136,7 @@ class Service
             $defaultLayout = 'main.php'; // TODO custom default layout
 
             $this->menusForImporting[] = Array(
-                'id' =>$menu['id'],
+                'id' => $menu['id'],
                 'nameInFile' => $menu['name'],
                 'nameForImporting' => $menuName,
                 'title' => $menuTitle,

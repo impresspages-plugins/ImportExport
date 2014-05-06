@@ -12,9 +12,8 @@
     <div><a href="?aa=ImportExport"><?php echo _e('Back', 'ImportExport'); ?></a></div>
 </div>
 
-
 <hr>
-<div class="ipsExportForm">
+<div>
     <?php echo $formExport->render(); ?>
 </div>
 

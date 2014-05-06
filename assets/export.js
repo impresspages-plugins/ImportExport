@@ -1,7 +1,7 @@
 (function ($) {
     "use strict";
 
-    var ipExportImport = new function () {
+    var ipExport = new function () {
 
         var $this = $(this);
 
@@ -81,8 +81,7 @@
 
 
     $(document).ready(function () {
-        "use strict";
-        ipExportImport.init();
+        ipExport.init();
     });
 
 })(jQuery);
