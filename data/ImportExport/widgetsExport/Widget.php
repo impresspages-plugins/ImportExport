@@ -84,7 +84,7 @@ abstract class Widget implements iWidget
 
         if (!is_dir($dirName)) {
             try {
-                mkdir($dirName, null, true);
+                mkdir($dirName, 0777, true);
             } catch (\Exception $e) {
                 throw new \Exception('Error making directory ' . $dirName . " while exporting ".self::name." widget. " . $e->getMessage());
             }
