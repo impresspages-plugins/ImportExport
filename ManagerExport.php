@@ -204,7 +204,7 @@ class ManagerExport
             'parentId' => $allSettings->getParentId(),
             'redirectUrl' => $allSettings->getRedirectUrl(),
             'title' => $allSettings->getTitle(),
-            'type' => $allSettings->getType(),
+            //'type' => $allSettings->getType(),
             'updatedAt' => $allSettings->getUpdatedAt(),
             'urlPath' => rtrim($allSettings->getUrlPath(),"/"),
         );
